@@ -18,6 +18,9 @@ export class HUD {
     this.bossNameEl = document.getElementById('boss-name');
     this.bossHpEl = document.getElementById('boss-hp');
     this.clearEl = document.getElementById('clear-banner');
+    this.colEl = document.getElementById('col');
+    this.lootEl = document.getElementById('loot-badge');
+    this._lootT = 0;
     this.progression = null; // late-bound by main.js; addKill(xp) feeds it
     this.floorName = '';
     this.place0 = '';
@@ -26,10 +29,34 @@ export class HUD {
     this._v = new THREE.Vector3();
   }
 
-  addKill(xp = 0) {
+  // xp/col instant-grant on kill; rare = { name, chance } rolls a toast + log.
+  // ponytail: no inventory — the console log IS the loot log.
+  addKill(xp = 0, col = 0, rare = null) {
     this.kills++;
     this.killsEl.textContent = `kills: ${this.kills}`;
     if (xp && this.progression) this.progression.addXp(xp);
+    if (col && this.progression) {
+      this.progression.addCol(col);
+      this.setCol(this.progression.col);
+    }
+    if (rare && Math.random() < rare.chance) {
+      console.log(`[CAO] loot: ${rare.name}`);
+      this.lootToast(`${rare.name} acquired`);
+    }
+  }
+
+  setCol(n) {
+    this.colEl.textContent = `${n} Col`;
+    this.colEl.classList.remove('pulse');
+    void this.colEl.offsetWidth; // restart the pulse animation
+    this.colEl.classList.add('pulse');
+  }
+
+  lootToast(text) {
+    this.lootEl.textContent = text;
+    this.lootEl.classList.add('show');
+    clearTimeout(this._lootT);
+    this._lootT = setTimeout(() => this.lootEl.classList.remove('show'), 3000);
   }
 
   setXP(r, lv) {

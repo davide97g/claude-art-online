@@ -31,6 +31,12 @@
     #lvl { position: absolute; top: 90px; left: 20px; font-size: 11px; letter-spacing: 0.12em; opacity: 0.7; text-transform: uppercase; }
     #levelup { position: absolute; top: 30%; width: 100%; text-align: center; font-size: 26px; letter-spacing: 0.4em; text-transform: uppercase; color: #ffd34d; text-shadow: 0 2px 18px rgba(0,0,0,0.85); opacity: 0; transform: translateY(8px); transition: opacity 0.5s ease, transform 0.5s ease; }
     #levelup.show { opacity: 1; transform: translateY(0); }
+    /* --- loot: Col counter (under Lv) + rare-drop toast --- */
+    #col { position: absolute; top: 104px; left: 20px; font-size: 12px; letter-spacing: 0.12em; color: #ffd34d; opacity: 0.75; }
+    #col.pulse { animation: colpulse 0.4s ease; }
+    @keyframes colpulse { 30% { transform: scale(1.2); opacity: 1; } }
+    #loot-badge { position: absolute; top: 46%; width: 100%; text-align: center; font-size: 18px; letter-spacing: 0.3em; text-transform: uppercase; color: #ffd34d; text-shadow: 0 2px 18px rgba(0,0,0,0.85); opacity: 0; transform: translateY(8px); transition: opacity 0.5s ease, transform 0.5s ease; }
+    #loot-badge.show { opacity: 1; transform: translateY(0); }
     /* --- boss bar (bottom-center, SAO segmented look) --- */
     #boss-wrap { position: absolute; bottom: 104px; left: 50%; transform: translateX(-50%); width: min(560px, 70vw); text-align: center; opacity: 0; transition: opacity 0.5s ease; }
     #boss-wrap.show { opacity: 1; }
@@ -86,7 +92,9 @@
     <div id="hp-wrap"><div id="hp"></div></div>
     <div id="xp-wrap"><div id="xp"></div></div>
     <div id="lvl">Lv 1</div>
+    <div id="col">0 Col</div>
     <div id="levelup"></div>
+    <div id="loot-badge"></div>
     <div id="gate-msg">Boss gate · sealed</div>
     <div id="boss-wrap"><div id="boss-name"></div><div id="boss-bar"><div id="boss-hp"></div><div id="boss-segs"></div></div></div>
     <div id="clear-banner"></div>

@@ -8,10 +8,11 @@ export class Progression {
   constructor() {
     this.lv = 1;
     this.xp = 0;
+    this.col = 0; // currency; loot drops feed it through hud.addKill
     this.cleared = []; // biome ids with the boss beaten (loading-screen checkmarks)
     try {
       const s = JSON.parse(localStorage.getItem(KEY));
-      if (s) { this.lv = s.lv || 1; this.xp = s.xp || 0; this.cleared = s.cleared || []; }
+      if (s) { this.lv = s.lv || 1; this.xp = s.xp || 0; this.col = s.col || 0; this.cleared = s.cleared || []; }
     } catch { /* private mode / corrupt save → fresh run */ }
     this.hud = null;    // late-bound by main.js (same pattern as player.hud)
     this.player = null;
@@ -37,6 +38,11 @@ export class Progression {
     if (this.hud) this.hud.setXP(this.xp / this.xpNext(), this.lv);
   }
 
+  addCol(n) {
+    this.col += n;
+    this.save();
+  }
+
   clearFloor(id) {
     if (!this.cleared.includes(id)) { this.cleared.push(id); this.save(); }
   }
@@ -44,7 +50,7 @@ export class Progression {
   isCleared(id) { return this.cleared.includes(id); }
 
   save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ lv: this.lv, xp: this.xp, cleared: this.cleared })); }
+    try { localStorage.setItem(KEY, JSON.stringify({ lv: this.lv, xp: this.xp, col: this.col, cleared: this.cleared })); }
     catch { /* storage unavailable → session-only progression */ }
   }
 }

@@ -1,19 +1,20 @@
 import * as THREE from 'three';
-import { createFloor, terrainHeight } from './world/floor.js';
-import { createTown, colliders } from './world/town.js';
-import { Villagers } from './world/npc.js';
-import { Player } from './player/controller.js';
+import pkg from '../package.json';
 import { Blade } from './combat/blade.js';
-import { Dummy } from './combat/dummy.js';
-import { Golem } from './combat/golem.js';
+import { Boar } from './combat/boar.js';
 import { KoboldLord } from './combat/boss.js';
 import { BossIntro } from './combat/cutscene.js';
-import { HUD } from './ui/hud.js';
-import { Progression } from './progression.js';
+import { Dummy } from './combat/dummy.js';
+import { Golem } from './combat/golem.js';
 import { manager } from './loading.js';
+import { Player } from './player/controller.js';
+import { Progression } from './progression.js';
+import { HUD } from './ui/hud.js';
 import { getBiome } from './world/biomes.js';
+import { createFloor, terrainHeight } from './world/floor.js';
+import { Villagers } from './world/npc.js';
+import { colliders, createTown } from './world/town.js';
 import { createWeather } from './world/weather.js';
-import pkg from '../package.json';
 
 document.getElementById('version').textContent = 'v' + pkg.version;
 
@@ -210,6 +211,7 @@ window.addEventListener('wheel', (e) => {
 }, { passive: true });
 hud.setFloor(`Floor ${biome.id}`, biome.place0);
 hud.setXP(progression.xp / progression.xpNext(), progression.lv);
+hud.setCol(progression.col);
 let currentPlace = null;
 function nearestPlace(p) {
   let best = null, bestD = Infinity;
@@ -224,7 +226,9 @@ const weather = createWeather(scene, biome.weather, { sun, hemi });
 const enemies = biome.enemies.map((e) =>
   e.type === 'dummy'
     ? new Dummy(scene, e.x, e.z, terrainHeight, hud)
-    : new Golem(scene, e.x, e.z, terrainHeight, hud, player, world, biome.enemyTint));
+    : e.type === 'boar'
+      ? new Boar(scene, e.x, e.z, terrainHeight, hud, player)
+      : new Golem(scene, e.x, e.z, terrainHeight, hud, player, world, biome.enemyTint));
 let bossIntro = null;
 if (biome.boss) {
   const boss = new KoboldLord(scene, biome.boss.x, biome.boss.z, terrainHeight, hud, player, world);

@@ -50,6 +50,10 @@ export const BIOMES = [
     ],
     enemies: [
       { type: 'dummy', x: 5, z: -9 }, { type: 'dummy', x: -7, z: -14 },
+      // frenzy boars: the floor-1 grind, roaming the fields flanking the gate road
+      { type: 'boar', x: -20, z: -16 }, { type: 'boar', x: 24, z: -18 },
+      { type: 'boar', x: -30, z: -32 }, { type: 'boar', x: 32, z: -36 },
+      { type: 'boar', x: 6, z: -44 }, { type: 'boar', x: -14, z: -54 },
       { type: 'golem', x: 14, z: -28 }, { type: 'golem', x: -18, z: -42 },
       { type: 'golem', x: 8, z: -66 }, { type: 'golem', x: -10, z: -88 },
       { type: 'golem', x: 20, z: -102 },

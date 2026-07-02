@@ -103,7 +103,7 @@ export class Golem {
     if (this.hp <= 0) {
       this.alive = false;
       this.respawnT = 14;
-      this.hud.addKill(20);
+      this.hud.addKill(20, 25, { name: 'Moss Core', chance: 0.1 });
     }
   }
 

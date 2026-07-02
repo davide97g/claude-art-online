@@ -58,7 +58,7 @@ export class Dummy {
     if (this.hp <= 0) {
       this.alive = false;
       this.respawnT = 3;
-      this.hud.addKill(5);
+      this.hud.addKill(5, 3);
     }
   }
 

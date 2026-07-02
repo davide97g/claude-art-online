@@ -164,7 +164,7 @@ export class KoboldLord {
     if (this.state === 'chase') this.enter('stagger', 0.35);
     if (this.hp <= 0) {
       this.alive = false;
-      this.hud.addKill(250);
+      this.hud.addKill(250, 200, { name: 'Kobold Crown', chance: 1 });
       this.hud.hideBoss();
       this.ring.visible = false;
       if (this.onDeath) this.onDeath();
