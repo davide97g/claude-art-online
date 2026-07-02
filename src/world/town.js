@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { gltf as loader } from '../loading.js';
 import { GATE_POS } from './floor.js';
+import { cityLayout } from './citylayout.js';
 
 // Populates Floor 1 with KayKit Medieval Hexagon Pack models (CC0, Kay Lousberg —
 // same artist as the knight, so silhouettes stay coherent). Everything loads
@@ -178,20 +179,38 @@ export function createTown(scene, getHeight, biome) {
       .then((m) => { if (m) tintObject(m, tint); });
   }
 
+  // --- dense city (Floor 5): buildings lining the Royal Mile spine + castle on the crag ---
+  if (biome.city) {
+    for (const b of cityLayout(biome.city, rng)) {
+      place(root, bp(b.type, b.color), b.x, b.z, getHeight,
+        { yaw: b.yaw, sink: b.castle ? 0.6 : 0.15, scale: b.castle ? SCALE * 1.6 : SCALE })
+        .then((m) => { if (m) tintObject(m, tint); });
+    }
+  }
+
   // --- props: the small stuff that makes a place feel lived-in ---
   for (const [name, x, z] of biome.props) {
     place(root, `decoration/props/${name}`, x, z, getHeight, { yaw: rng() * Math.PI * 2, sink: 0 })
       .then((m) => { if (m) tintObject(m, tint); });
   }
 
-  // --- bannered lane drawing the eye from the plaza toward the boss gate (Floor 1 only) ---
-  if (biome.flags) {
-    const flags = ['flag_green', 'flag_yellow', 'flag_red'];
+  // --- bannered lane drawing the eye from the plaza toward the boss gate (Floor 1) / Royal Mile (Floor 5) ---
+  const flags = ['flag_green', 'flag_yellow', 'flag_red'];
+  if (biome.flags === true) {
+    // Floor 1: bannered lane from the plaza toward the boss gate (−Z)
     [6, -8, -22, -36, -50].forEach((z, i) => {
       for (const x of [-7.5, 7.5]) {
         place(root, `decoration/props/${flags[i % flags.length]}`, x, z, getHeight, { sink: 0 });
       }
     });
+  } else if (biome.flags === 'spine') {
+    // Floor 5: banners down the Royal Mile (+Z)
+    let i = 0;
+    for (let z = 20; z <= 78; z += 12, i++) {
+      for (const x of [-4.5, 4.5]) {
+        place(root, `decoration/props/${flags[i % flags.length]}`, x, z, getHeight, { sink: 0 });
+      }
+    }
   }
 
   // --- ruins (Kenney Castle Kit): sunk, tilted, darkened wall/tower/gate pieces ---
