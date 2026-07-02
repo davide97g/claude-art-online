@@ -228,7 +228,8 @@ export class Villagers {
   swapToModel(p, g, cfg) {
     const obj = skeletonClone(g.scene);
     obj.scale.setScalar(cfg.scale || 1);
-    obj.rotation.y = Math.PI; // Blender +Y front → glTF −Z; face +Z so the nose leads movement
+    // no yaw flip: Quaternius rigs already face +Z, same as the fallback's nose,
+    // so the movement yaw (atan2(dx,dz)) points them along their path
     while (p.g.children.length) p.g.remove(p.g.children[0]); // drop the fallback visuals
     p.g.add(obj);
     const mixer = new THREE.AnimationMixer(obj);
