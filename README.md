@@ -49,4 +49,8 @@ Each floor tints its terrain, lighting, fog, settlement, and the golem enemies t
 - Knight character: [KayKit Adventurers](https://github.com/KayLousberg/KayKit-Adventurers) by Kay Lousberg — CC0
 - Town, nature & props: [KayKit Medieval Hexagon Pack](https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0) by Kay Lousberg — CC0 (`public/assets/kaykit/`)
 - Ruins (Floors 2-3): [Castle Kit](https://kenney.nl/assets/castle-kit) by Kenney — CC0 (`public/assets/castle/`)
-- Music: [Medieval: The Bard's Tale](https://opengameart.org/content/medieval-the-bards-tale) by RandomMind — CC0 (`public/assets/audio/`)
+- Music: [Medieval: The Bard's Tale](https://opengameart.org/content/medieval-the-bards-tale) by RandomMind — CC0 (`public/assets/audio/`), placeholder until the per-floor tracks are made
+
+## Soundtrack
+
+Per-floor instrumental score design (mood, style, Suno prompts, the recurring "Ascension" motif, and where each song file goes): [SOUNDTRACK.md](./SOUNDTRACK.md).

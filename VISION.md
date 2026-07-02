@@ -30,6 +30,9 @@ Our art direction: **low-poly stylized, flat-shaded, strong silhouettes.**
 - The tower is always visible in the skybox above you: cheap, huge payoff.
 - Combat readability over realism: glowing blade trails, hit-stop, damage
   numbers, telegraphed enemy wind-ups.
+- Audio: per-floor instrumental score, all built on one recurring 4-note
+  "Ascension" motif that transforms per biome. Full design + Suno prompts in
+  [SOUNDTRACK.md](./SOUNDTRACK.md).
 
 Why low-poly: it's scriptable in Blender Python, exports tiny GLBs,
 looks intentional rather than "budget realistic", and runs at 60fps in a browser.
