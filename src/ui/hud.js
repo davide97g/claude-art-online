@@ -8,6 +8,11 @@ export class HUD {
     this.hpEl = document.getElementById('hp');
     this.flashEl = document.getElementById('hit-flash');
     this.deathEl = document.getElementById('death-msg');
+    this.floorLabelEl = document.getElementById('floor-label');
+    this.badgeEl = document.getElementById('place-badge');
+    this.floorName = '';
+    this.place0 = '';
+    this._badgeT = 0;
     this.kills = 0;
     this._v = new THREE.Vector3();
   }
@@ -32,6 +37,21 @@ export class HUD {
 
   setGateNear(near) {
     this.gateEl.style.opacity = near ? 1 : 0;
+  }
+
+  setFloor(floorName, place0) {
+    this.floorName = floorName;
+    this.place0 = place0;
+    this.floorLabelEl.textContent = `${floorName} · ${place0}`;
+  }
+
+  enterPlace(name) {
+    this.floorLabelEl.textContent = `${this.floorName} · ${name || this.place0}`;
+    if (!name) return;                 // left all zones → label reverts, no badge
+    this.badgeEl.textContent = name;
+    this.badgeEl.classList.add('show');
+    clearTimeout(this._badgeT);
+    this._badgeT = setTimeout(() => this.badgeEl.classList.remove('show'), 3500);
   }
 
   spawnDamage(worldPos, amount, camera) {

@@ -148,6 +148,16 @@ const floor = createFloor(scene, biome);
 createTown(scene, terrainHeight, biome);
 const player = new Player(scene, camera, input, terrainHeight);
 player.hud = hud;
+hud.setFloor(`Floor ${biome.id}`, biome.place0);
+let currentPlace = null;
+function nearestPlace(p) {
+  let best = null, bestD = Infinity;
+  for (const pl of biome.places) {
+    const d = Math.hypot(p.x - pl.x, p.z - pl.z);
+    if (d < pl.r && d < bestD) { bestD = d; best = pl; }
+  }
+  return best;
+}
 const blade = new Blade(player, scene, world, hud);
 const weather = createWeather(scene, biome.weather, { sun, hemi });
 const enemies = biome.enemies.map((e) =>
@@ -175,6 +185,10 @@ function tick() {
   weather.update(dt, player.pos);
 
   hud.setGateNear(player.pos.distanceTo(floor.gatePos) < 14);
+
+  const place = nearestPlace(player.pos);
+  const placeName = place ? place.name : null;
+  if (placeName !== currentPlace) { currentPlace = placeName; hud.enterPlace(placeName); }
 
   input.dx = 0;
   input.dy = 0;
