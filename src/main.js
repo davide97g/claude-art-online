@@ -59,7 +59,7 @@ const setPreview = (id) => {
   floorShots(id).forEach((src, i) => { if (kbEls[i]) kbEls[i].style.backgroundImage = `url(${src})`; });
   if (taglineEl) taglineEl.textContent = `Floor ${id} · ${getBiome(id).name}`;
 };
-[1, 2, 3].forEach((id) => floorShots(id).forEach((src) => { new Image().src = src; })); // preload → instant swaps
+[1, 2, 3, 4, 5].forEach((id) => floorShots(id).forEach((src) => { new Image().src = src; })); // preload → instant swaps
 setPreview(biome.id);
 document.querySelectorAll('#floor-select .floor').forEach((el) => {
   const lvl = parseInt(el.dataset.level, 10);
