@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { gltf } from '../loading.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -43,7 +43,7 @@ export class Player {
   }
 
   loadModel() {
-    new GLTFLoader().load(
+    gltf.load(
       '/assets/models/knight.glb',
       (gltf) => {
         const model = gltf.scene;
@@ -91,7 +91,7 @@ export class Player {
   // our Blender-made sword replaces the knight's stock one, same hand slot
   loadCustomSword() {
     if (!this.swordNode) return;
-    new GLTFLoader().load(
+    gltf.load(
       '/assets/models/sword.glb',
       (g) => {
         const stock = this.swordNode;

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { gltf as loader } from '../loading.js';
 import { GATE_POS } from './floor.js';
 
 // Populates Floor 1 with KayKit Medieval Hexagon Pack models (CC0, Kay Lousberg —
@@ -12,7 +12,6 @@ import { GATE_POS } from './floor.js';
 
 const BASE = '/assets/kaykit';
 const SCALE = 4.2;
-const loader = new GLTFLoader();
 
 // seeded RNG → the town/forest layout is identical on every reload (nicer for tuning)
 function mulberry32(a) {

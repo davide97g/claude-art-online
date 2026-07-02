@@ -19,10 +19,30 @@
     #death-msg { position: absolute; top: 38%; width: 100%; text-align: center; font-size: 46px; letter-spacing: 0.4em; color: #ff4040; opacity: 0; transition: opacity 0.7s; text-transform: uppercase; }
     .dmg { position: absolute; font-size: 20px; font-weight: 700; color: #ffd34d; text-shadow: 0 2px 6px rgba(0,0,0,0.6); animation: dmgfloat 0.8s ease-out forwards; }
     @keyframes dmgfloat { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-46px) scale(1.25); } }
-    #lock-overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(5, 8, 15, 0.82); color: #eaf2ff; cursor: pointer; z-index: 10; }
-    #lock-overlay h1 { font-size: 26px; font-weight: 600; letter-spacing: 0.3em; margin: 0; text-transform: uppercase; }
-    #lock-overlay p { font-size: 13px; opacity: 0.7; margin: 2px; }
-    #lock-overlay .go { margin-top: 14px; padding: 10px 28px; border: 1px solid #7fd4ff; border-radius: 4px; color: #7fd4ff; font-size: 14px; letter-spacing: 0.2em; }
+    /* --- loading screen --- */
+    #lock-overlay { position: fixed; inset: 0; overflow: hidden; background: #0b0e14; color: #eaf2ff; z-index: 10; opacity: 1; transition: opacity 0.6s ease; }
+    #lock-overlay.hidden { opacity: 0; pointer-events: none; }
+    /* Ken Burns image stack: layers fade in/out; the active one slowly zooms + drifts */
+    #lock-bg { position: absolute; inset: 0; }
+    #lock-bg .kb { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.4s ease; }
+    #lock-bg .kb.active { opacity: 1; animation: kenburns 9s ease-out forwards; }
+    @keyframes kenburns { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.12) translate(-1.5%, -1%); } }
+    /* scrim keeps text legible over any frame */
+    #lock-overlay::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,8,15,0.55) 0%, rgba(5,8,15,0.15) 40%, rgba(5,8,15,0.85) 100%); pointer-events: none; }
+    #lock-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 24px; z-index: 1; }
+    #lock-content h1 { font-size: 30px; font-weight: 600; letter-spacing: 0.34em; margin: 0; text-transform: uppercase; text-shadow: 0 2px 20px rgba(0,0,0,0.7); }
+    #lock-content .tagline { font-size: 13px; opacity: 0.7; letter-spacing: 0.16em; margin-top: 10px; text-transform: uppercase; }
+    /* bottom cluster: rotating tip + progress bar */
+    #lock-foot { position: absolute; left: 0; right: 0; bottom: 46px; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 0 24px; }
+    #load-tip { font-size: 13px; opacity: 0.82; max-width: 620px; min-height: 34px; line-height: 1.4; transition: opacity 0.5s ease; text-shadow: 0 1px 8px rgba(0,0,0,0.8); }
+    #load-tip b { color: #7fd4ff; font-weight: 600; }
+    #load-bar-wrap { width: min(420px, 76vw); height: 4px; background: rgba(255,255,255,0.14); border-radius: 3px; overflow: hidden; }
+    #load-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #4aa8ff, #7fd4ff); border-radius: 3px; transition: width 0.35s ease; box-shadow: 0 0 12px rgba(127,212,255,0.6); }
+    #load-status { font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; opacity: 0.6; }
+    #lock-go { margin-top: 2px; padding: 11px 34px; border: 1px solid #7fd4ff; border-radius: 4px; color: #7fd4ff; font-size: 14px; letter-spacing: 0.24em; text-transform: uppercase; opacity: 0.28; pointer-events: none; transition: opacity 0.4s ease, background 0.2s ease; }
+    #lock-go.ready { opacity: 1; pointer-events: auto; cursor: pointer; animation: gopulse 2s ease-in-out infinite; }
+    #lock-go.ready:hover { background: rgba(127,212,255,0.14); }
+    @keyframes gopulse { 0%,100% { box-shadow: 0 0 0 rgba(127,212,255,0); } 50% { box-shadow: 0 0 18px rgba(127,212,255,0.5); } }
   </style>
 </head>
 <body>
@@ -37,11 +57,21 @@
     <div id="hint">WASD move · Shift sprint · Mouse look · Left-click to attack · M mute · Esc to pause</div>
   </div>
   <div id="lock-overlay">
-    <h1>Claude Art Online</h1>
-    <p>Floor 1 awaits. The gate above is sealed.</p>
-    <p>WASD to move · left-click to swing your blade</p>
-    <p>Plays in fullscreen · press Esc anytime to pause and free your mouse</p>
-    <div class="go">Link start</div>
+    <div id="lock-bg">
+      <div class="kb active" style="background-image:url(/assets/loading/shot1.jpg)"></div>
+      <div class="kb" style="background-image:url(/assets/loading/shot2.jpg)"></div>
+      <div class="kb" style="background-image:url(/assets/loading/shot3.jpg)"></div>
+    </div>
+    <div id="lock-content">
+      <h1>Claude Art Online</h1>
+      <div class="tagline">Floor 1 · The gate is sealed</div>
+    </div>
+    <div id="lock-foot">
+      <div id="load-tip"></div>
+      <div id="load-bar-wrap"><div id="load-bar"></div></div>
+      <div id="load-status">Loading…</div>
+      <div id="lock-go">Link start</div>
+    </div>
   </div>
   <script type="module" src="/src/main.js"></script>
 </body>

@@ -6,6 +6,7 @@ import { Blade } from './combat/blade.js';
 import { Dummy } from './combat/dummy.js';
 import { Golem } from './combat/golem.js';
 import { HUD } from './ui/hud.js';
+import { manager } from './loading.js';
 
 // --- renderer / scene ---
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -35,6 +36,8 @@ scene.add(sun);
 // --- input (pointer lock; per-frame mouse deltas) ---
 const input = { keys: {}, dx: 0, dy: 0, attackQueued: false, locked: false };
 const overlay = document.getElementById('lock-overlay');
+const goBtn = document.getElementById('lock-go');
+let ready = false; // flips true when assets finish loading (or the safety net trips)
 
 // background music: CC0 "Medieval: The Bard's Tale" by RandomMind (opengameart.org).
 // Autoplay is blocked until a user gesture, so it kicks off on the first Link-start click.
@@ -42,15 +45,71 @@ const music = new Audio('/assets/audio/bards_tale.mp3');
 music.loop = true;
 music.volume = 0.35;
 
+// Entry is gated on load: clicks are ignored until `ready`.
 overlay.addEventListener('click', async () => {
+  if (!ready) return;
   music.play().catch(() => {}); // no-op if already playing / gesture didn't count
   try { await document.documentElement.requestFullscreen(); } catch { /* fullscreen optional */ }
   renderer.domElement.requestPointerLock();
 });
 document.addEventListener('pointerlockchange', () => {
   input.locked = document.pointerLockElement === renderer.domElement;
-  overlay.style.display = input.locked ? 'none' : 'flex';
+  overlay.classList.toggle('hidden', input.locked); // fade out on enter, back on Esc-pause
 });
+
+// --- loading screen: progress bar, rotating tips, Ken Burns crossfade ---
+// Wired before the world is built (below) so no onProgress/onLoad fires unheard.
+const barEl = document.getElementById('load-bar');
+const statusEl = document.getElementById('load-status');
+manager.onProgress = (_url, loaded, total) => {
+  const pct = total ? Math.round((loaded / total) * 100) : 0;
+  barEl.style.width = pct + '%';
+  statusEl.textContent = `Loading… ${pct}%`;
+};
+function markReady() {
+  if (ready) return;
+  ready = true;
+  barEl.style.width = '100%';
+  statusEl.textContent = 'Enter Aincrad';
+  goBtn.classList.add('ready');
+}
+manager.onLoad = markReady;
+manager.onError = (url) => console.log('[CAO] asset failed, continuing gray-box:', url);
+// ponytail: safety net — the game is fully playable gray-box, so never trap the
+// player behind a bar that never fills if a loader misbehaves. Force-enter after 12s.
+setTimeout(markReady, 12000);
+
+// rotating gameplay tips
+const tips = [
+  'A clean hit <b>slows time</b> for a beat — that pause is your cue to chain the next swing.',
+  'Hold <b>Shift</b> to sprint; close the distance to the sealed gate.',
+  'Attacks buffer: <b>left-click mid-swing</b> and the next one fires the instant the blade resets.',
+  'Moss golems <b>telegraph</b> — their eyes flare before they strike. Read it, then punish.',
+  'Every swing is a <b>random slash</b>; keep clicking to flow through the combo.',
+  'Press <b>Esc</b> anytime to pause and free your mouse.',
+];
+const tipEl = document.getElementById('load-tip');
+tipEl.innerHTML = tips[0];
+let tipI = 1;
+setInterval(() => {
+  tipEl.style.opacity = '0';
+  setTimeout(() => {
+    tipEl.innerHTML = tips[tipI % tips.length];
+    tipEl.style.opacity = '';
+    tipI++;
+  }, 500);
+}, 5000);
+
+// Ken Burns: cross-fade the background stack, replaying each layer's zoom.
+const kbEls = [...document.querySelectorAll('#lock-bg .kb')];
+let kbI = 0;
+setInterval(() => {
+  kbEls[kbI].classList.remove('active');
+  kbI = (kbI + 1) % kbEls.length;
+  const next = kbEls[kbI];
+  void next.offsetWidth; // reflow so the zoom animation restarts from scale(1)
+  next.classList.add('active');
+}, 7000);
 document.addEventListener('mousemove', (e) => {
   if (!input.locked) return;
   input.dx += e.movementX;

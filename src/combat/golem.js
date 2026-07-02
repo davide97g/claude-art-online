@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { gltf } from '../loading.js';
 
 // Moss Golem: first real enemy. No skeleton — animated in code by moving
 // its named parts (Body, ArmL/R, eyes). States: idle -> chase -> windup
@@ -10,7 +10,7 @@ let protoLoad = null;
 function loadProto() {
   if (!protoLoad) {
     protoLoad = new Promise((resolve) => {
-      new GLTFLoader().load(
+      gltf.load(
         '/assets/models/golem.glb',
         (g) => { proto = g.scene; resolve(); },
         undefined,
