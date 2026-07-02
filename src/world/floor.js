@@ -186,11 +186,24 @@ export function createFloor(scene, biome) {
     scene.add(water);
   }
 
+  // gate-open state: boss death flips the colors and spins the ring up.
+  // spinBias keeps ring.rotation.z continuous across the speed change.
+  let gateOpen = false, spinBias = 0, lastT = 0;
+
   return {
     gatePos: new THREE.Vector3(GATE_POS.x, gy, GATE_POS.z),
+    openGate() {
+      gateOpen = true;
+      spinBias = lastT * (0.4 - 1.6);
+      ring.material.color.setHex(0xffd34d);
+      portal.material.color.setHex(0x9fd8ff);
+    },
     update(t) {
-      ring.rotation.z = t * 0.4;
-      portal.material.opacity = 0.65 + Math.sin(t * 1.6) * 0.1;
+      lastT = t;
+      ring.rotation.z = gateOpen ? t * 1.6 + spinBias : t * 0.4;
+      portal.material.opacity = gateOpen
+        ? 0.75 + Math.sin(t * 3) * 0.15
+        : 0.65 + Math.sin(t * 1.6) * 0.1;
       for (const r of floaters) r.position.y = r.userData.baseY + Math.sin(t * 0.3 + r.userData.phase) * 2.5;
       if (water) water.material.map.offset.y = -t * 0.06;
     },

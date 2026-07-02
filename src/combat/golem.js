@@ -103,7 +103,7 @@ export class Golem {
     if (this.hp <= 0) {
       this.alive = false;
       this.respawnT = 14;
-      this.hud.addKill();
+      this.hud.addKill(20);
     }
   }
 

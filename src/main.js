@@ -6,7 +6,10 @@ import { Player } from './player/controller.js';
 import { Blade } from './combat/blade.js';
 import { Dummy } from './combat/dummy.js';
 import { Golem } from './combat/golem.js';
+import { KoboldLord } from './combat/boss.js';
+import { BossIntro } from './combat/cutscene.js';
 import { HUD } from './ui/hud.js';
+import { Progression } from './progression.js';
 import { manager } from './loading.js';
 import { getBiome } from './world/biomes.js';
 import { createWeather } from './world/weather.js';
@@ -15,6 +18,7 @@ import pkg from '../package.json';
 document.getElementById('version').textContent = 'v' + pkg.version;
 
 const biome = getBiome(new URLSearchParams(location.search).get('level'));
+const progression = new Progression(); // XP/level, localStorage-backed
 
 // --- renderer / scene ---
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -50,6 +54,9 @@ let ready = false; // flips true when assets finish loading (or the safety net t
 // mark the picked floor in the loading-screen selector; the others are reload links
 const curFloor = document.querySelector(`#floor-select .floor[data-level="${biome.id}"]`);
 if (curFloor) curFloor.classList.add('current');
+document.querySelectorAll('#floor-select .floor').forEach((el) => {
+  if (progression.isCleared(parseInt(el.dataset.level, 10))) el.insertAdjacentText('beforeend', ' ✓');
+});
 const taglineEl = document.querySelector('#lock-content .tagline');
 
 // Loading-screen previews: each floor has its own orbital-cam shot set at
@@ -128,6 +135,8 @@ const tips = [
   'Moss golems <b>telegraph</b> — their eyes flare before they strike. Read it, then punish.',
   'Every swing is a <b>random slash</b>; keep clicking to flow through the combo.',
   'Press <b>Esc</b> anytime to pause and free your mouse.',
+  'The Kobold Lord locks his <b>charge</b> the moment the red ring fades — sidestep, then punish the recovery.',
+  'Kills grant <b>XP</b>. Level up for more health and heavier slashes — it persists between runs.',
 ];
 const tipEl = document.getElementById('load-tip');
 tipEl.innerHTML = tips[0];
@@ -174,10 +183,15 @@ const world = {
 
 // --- build everything ---
 const hud = new HUD();
+hud.progression = progression; // addKill(xp) feeds XP through the existing kill funnel
+progression.hud = hud;         // ...and level-ups drive the XP bar / popup back
 const floor = createFloor(scene, biome);
 createTown(scene, terrainHeight, biome);
 const player = new Player(scene, camera, input, terrainHeight, colliders);
 player.hud = hud;
+progression.player = player;
+player.maxHp = progression.maxHpFor();
+player.hp = player.maxHp;
 const villagers = new Villagers(scene, terrainHeight, colliders, biome);
 
 // --- scroll-to-zoom + fading slider feedback ---
@@ -195,6 +209,7 @@ window.addEventListener('wheel', (e) => {
   zoomHideT = setTimeout(() => zoomBar.classList.remove('show'), 900);
 }, { passive: true });
 hud.setFloor(`Floor ${biome.id}`, biome.place0);
+hud.setXP(progression.xp / progression.xpNext(), progression.lv);
 let currentPlace = null;
 function nearestPlace(p) {
   let best = null, bestD = Infinity;
@@ -204,12 +219,28 @@ function nearestPlace(p) {
   }
   return best;
 }
-const blade = new Blade(player, scene, world, hud);
+const blade = new Blade(player, scene, world, hud, progression);
 const weather = createWeather(scene, biome.weather, { sun, hemi });
 const enemies = biome.enemies.map((e) =>
   e.type === 'dummy'
     ? new Dummy(scene, e.x, e.z, terrainHeight, hud)
     : new Golem(scene, e.x, e.z, terrainHeight, hud, player, world, biome.enemyTint));
+let bossIntro = null;
+if (biome.boss) {
+  const boss = new KoboldLord(scene, biome.boss.x, biome.boss.z, terrainHeight, hud, player, world);
+  boss.onDeath = () => {
+    floor.openGate();
+    hud.setGateOpen();
+    hud.showClear(`Floor ${biome.id}`);
+    progression.clearFloor(biome.id);
+  };
+  bossIntro = new BossIntro(camera, player, boss, hud);
+  boss.onWake = () => bossIntro.start(); // first wake plays the intro cutscene
+  enemies.push(boss); // rides the same contract: blade targeting, popups, update loop
+}
+
+// console debug handle (no gameplay effect)
+window.CAO = { player, enemies, progression };
 
 // --- loop ---
 const clock = new THREE.Clock();
@@ -224,8 +255,13 @@ function tick() {
   else world.timeScale += (1 - world.timeScale) * Math.min(1, dt * 14);
   const sdt = dt * world.timeScale;
 
-  player.update(dt, sdt);
-  blade.update(sdt, dt, input, enemies, camera);
+  if (bossIntro && bossIntro.blocking) {
+    bossIntro.update(dt);          // cutscene owns the camera; watch-only
+    input.attackQueued = false;    // drop clicks buffered during the scene
+  } else {
+    player.update(dt, sdt);
+    blade.update(sdt, dt, input, enemies, camera);
+  }
   for (const e of enemies) e.update(sdt, camera);
   villagers.update(dt);
   floor.update(elapsed);
@@ -239,6 +275,7 @@ function tick() {
 
   input.dx = 0;
   input.dy = 0;
+  if (bossIntro) bossIntro.postCamera(dt); // outro: blend scene camera back to the player orbit
   renderer.render(scene, camera);
 }
 tick();

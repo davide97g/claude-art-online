@@ -10,6 +10,15 @@ export class HUD {
     this.deathEl = document.getElementById('death-msg');
     this.floorLabelEl = document.getElementById('floor-label');
     this.badgeEl = document.getElementById('place-badge');
+    this.hudEl = document.getElementById('hud');
+    this.xpEl = document.getElementById('xp');
+    this.lvlEl = document.getElementById('lvl');
+    this.levelupEl = document.getElementById('levelup');
+    this.bossWrapEl = document.getElementById('boss-wrap');
+    this.bossNameEl = document.getElementById('boss-name');
+    this.bossHpEl = document.getElementById('boss-hp');
+    this.clearEl = document.getElementById('clear-banner');
+    this.progression = null; // late-bound by main.js; addKill(xp) feeds it
     this.floorName = '';
     this.place0 = '';
     this._badgeT = 0;
@@ -17,9 +26,64 @@ export class HUD {
     this._v = new THREE.Vector3();
   }
 
-  addKill() {
+  addKill(xp = 0) {
     this.kills++;
     this.killsEl.textContent = `kills: ${this.kills}`;
+    if (xp && this.progression) this.progression.addXp(xp);
+  }
+
+  setXP(r, lv) {
+    this.xpEl.style.width = `${Math.max(0, Math.min(1, r)) * 100}%`;
+    this.lvlEl.textContent = `Lv ${lv}`;
+  }
+
+  levelUp(lv) {
+    this.levelupEl.textContent = `Level up · Lv ${lv}`;
+    this.levelupEl.classList.add('show');
+    clearTimeout(this._luT);
+    this._luT = setTimeout(() => this.levelupEl.classList.remove('show'), 2000);
+  }
+
+  showBoss(name) {
+    this.bossNameEl.textContent = name;
+    this.bossWrapEl.classList.add('show');
+  }
+
+  // cutscene plate reveal: plate pops in with the HP bar sweeping 0 -> full
+  showBossIntro(name) {
+    this.showBoss(name);
+    const el = this.bossHpEl;
+    el.style.transition = 'none';
+    el.style.width = '0%';
+    requestAnimationFrame(() => {
+      el.style.transition = 'width 1.1s cubic-bezier(0.22, 1, 0.36, 1)';
+      el.style.width = '100%';
+      setTimeout(() => { el.style.transition = ''; }, 1200); // back to the CSS default
+    });
+  }
+
+  setCinematic(on) {
+    this.hudEl.classList.toggle('cine', on);
+  }
+
+  hideBoss() {
+    this.bossWrapEl.classList.remove('show');
+  }
+
+  setBossHP(r) {
+    this.bossHpEl.style.width = `${Math.max(0, r) * 100}%`;
+  }
+
+  showClear(floorName) {
+    this.clearEl.textContent = `${floorName} cleared`;
+    this.clearEl.style.opacity = 1;
+    clearTimeout(this._clearT);
+    this._clearT = setTimeout(() => { this.clearEl.style.opacity = 0; }, 4000);
+  }
+
+  setGateOpen() {
+    this.gateEl.textContent = 'Gate open · floor cleared';
+    this.gateEl.style.color = '#ffd34d';
   }
 
   setHP(r) {

@@ -10,10 +10,11 @@ const RANGE = 2.9;
 const TRAIL_MAX = 24;
 
 export class Blade {
-  constructor(player, scene, world, hud) {
+  constructor(player, scene, world, hud, progression) {
     this.player = player;
     this.world = world;
     this.hud = hud;
+    this.progression = progression;
 
     // pivot chain: roll (swipe angle) -> sweep (the actual swing arc)
     this.roll = new THREE.Group();
@@ -136,7 +137,8 @@ export class Blade {
       if (dist > RANGE) continue;
       to.normalize();
       if (fwd.dot(to) < 0.25) continue; // must be roughly in front
-      const dmg = Math.round((9 + Math.random() * 4) * this.swipePower);
+      const dmg = Math.round((9 + Math.random() * 4) * this.swipePower *
+        (this.progression ? this.progression.damageMult() : 1));
       e.takeHit(dmg, fwd);
       this.hud.spawnDamage(e.pos.clone().add(new THREE.Vector3(0, 2.1, 0)), dmg, camera);
       hitSomething = true;

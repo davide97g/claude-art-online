@@ -54,6 +54,7 @@ export const BIOMES = [
       { type: 'golem', x: 8, z: -66 }, { type: 'golem', x: -10, z: -88 },
       { type: 'golem', x: 20, z: -102 },
     ],
+    boss: { x: 0, z: -112 }, // Rendfang guards the gate; floors without this field stay sealed-only
   },
 
   { // ---------- Floor 2: Frostbound (snowfield) ----------
