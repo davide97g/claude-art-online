@@ -15,13 +15,28 @@ const BASE = '/assets/kaykit';
 const CASTLE = '/assets/castle';
 const SCALE = 4.2;
 
-// Cylinder colliders {x, z, r} the player pushes out of. Filled as buildings load
+// Cylinder colliders {x, z, r} the player pushes out of. Filled as models load
 // (async), so the reference is handed to the Player and populates over time.
-// ponytail: buildings only — rocks/trees/props stay passable. Add their transforms
-// here if the town should feel more solid.
+// Buildings + scattered trees/rocks + ruins register here; thin decorations
+// (flags, small props) stay passable on purpose.
+// ponytail: flat array, linear scan in the player each frame. A few hundred
+// colliders is nothing; add a broad-phase grid only if a floor blows past ~2k.
 export const colliders = [];
 const BUILDING_R = 2.4;   // footprint radius of a SCALE'd KayKit house
 const CASTLE_R = 4.5;     // the Floor-5 castle reads much larger
+const TREE_FACTOR = 0.35; // fraction of a tree's XZ footprint used as a collider (trunk-ish, not the whole canopy)
+const ROCK_FACTOR = 0.7;  // rocks are solid all the way out, so block most of their footprint
+const RUIN_FACTOR = 0.6;
+
+// XZ footprint radius of a loaded prototype (half of its larger horizontal extent).
+// Prototypes sit at scale 1, so callers multiply by the per-instance scale.
+const _box = new THREE.Box3();
+const _size = new THREE.Vector3();
+function footprintR(obj) {
+  _box.setFromObject(obj);
+  _box.getSize(_size);
+  return Math.max(_size.x, _size.z) * 0.5;
+}
 
 // seeded RNG → the town/forest layout is identical on every reload (nicer for tuning)
 function mulberry32(a) {
@@ -94,16 +109,26 @@ async function placeRuin(parent, name, x, z, getHeight, rng, tint) {
   m.rotation.set((rng() - 0.5) * 0.3, rng() * Math.PI * 2, (rng() - 0.5) * 0.3); // tilt + yaw
   m.scale.setScalar(SCALE * 1.4); // Kenney pieces read larger than KayKit hex
   tintObject(m, tint == null ? 0x8a8f96 : tint); // always darken ruins a touch
+  colliders.push({ x, z, r: footprintR(m) * RUIN_FACTOR }); // m is already scaled → footprint is world-size
   parent.add(m);
   return m;
 }
 
+// register one cylinder collider per scattered instance, sized from the prototype footprint
+function scatterColliders(s, transforms, factor) {
+  if (!factor) return;
+  const baseR = footprintR(s) * factor;
+  if (!(baseR > 0)) return;
+  for (const t of transforms) colliders.push({ x: t.pos.x, z: t.pos.z, r: baseR * t.scl.x });
+}
+
 // One InstancedMesh per mesh in the prototype → many props, ~1 draw call each.
-async function scatter(parent, path, transforms) {
+async function scatter(parent, path, transforms, { collide = 0 } = {}) {
   const s = await proto(path);
   if (!s || !transforms.length) return;
   const meshes = [];
   s.updateWorldMatrix(true, true);
+  scatterColliders(s, transforms, collide);
   s.traverse((o) => { if (o.isMesh) meshes.push(o); });
   const m = new THREE.Matrix4();
   for (const mesh of meshes) {
@@ -122,13 +147,14 @@ async function scatter(parent, path, transforms) {
 }
 
 // scatter(), but tint the shared instanced material toward the biome color.
-async function scatterTinted(parent, path, transforms, tint) {
-  if (tint == null) return scatter(parent, path, transforms);
+async function scatterTinted(parent, path, transforms, tint, { collide = 0 } = {}) {
+  if (tint == null) return scatter(parent, path, transforms, { collide });
   const s = await proto(path);
   if (!s || !transforms.length) return;
   const c = new THREE.Color(tint);
   const meshes = [];
   s.updateWorldMatrix(true, true);
+  scatterColliders(s, transforms, collide);
   s.traverse((o) => { if (o.isMesh) meshes.push(o); });
   const m = new THREE.Matrix4();
   for (const mesh of meshes) {
@@ -232,13 +258,15 @@ export function createTown(scene, getHeight, biome) {
   // --- forest: instanced, ringing the wilderness, tinted per biome ---
   for (const t of biome.trees) {
     scatterTinted(root, t.path,
-      scatterRing(rng, t.count, 46, 118, getHeight, SCALE * t.sMin, SCALE * t.sMax, { skipTown: true }), tint);
+      scatterRing(rng, t.count, 46, 118, getHeight, SCALE * t.sMin, SCALE * t.sMax, { skipTown: true }), tint,
+      { collide: TREE_FACTOR });
   }
 
   // --- rocks / boulders scattered through it all ---
   for (const r of biome.rocks) {
     scatterTinted(root, r.path,
-      scatterRing(rng, r.count, 30, 120, getHeight, SCALE * r.sMin, SCALE * r.sMax, { skipTown: true }), tint);
+      scatterRing(rng, r.count, 30, 120, getHeight, SCALE * r.sMin, SCALE * r.sMax, { skipTown: true }), tint,
+      { collide: ROCK_FACTOR });
   }
 
   // --- distant hills & mountains ringing the edge: cheap depth under the tower skybox ---

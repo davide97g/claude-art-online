@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createFloor, terrainHeight } from './world/floor.js';
 import { createTown, colliders } from './world/town.js';
+import { Villagers } from './world/npc.js';
 import { Player } from './player/controller.js';
 import { Blade } from './combat/blade.js';
 import { Dummy } from './combat/dummy.js';
@@ -177,6 +178,7 @@ const floor = createFloor(scene, biome);
 createTown(scene, terrainHeight, biome);
 const player = new Player(scene, camera, input, terrainHeight, colliders);
 player.hud = hud;
+const villagers = new Villagers(scene, terrainHeight, colliders, 10);
 
 // --- scroll-to-zoom + fading slider feedback ---
 const zoomBar = document.getElementById('zoom-bar');
@@ -225,6 +227,7 @@ function tick() {
   player.update(dt, sdt);
   blade.update(sdt, dt, input, enemies, camera);
   for (const e of enemies) e.update(sdt, camera);
+  villagers.update(dt);
   floor.update(elapsed);
   weather.update(dt, player.pos);
 
