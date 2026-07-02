@@ -201,3 +201,14 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// --- trailer capture harness (dev-only; keep) ---
+// Inert in normal play — loads only with ?rec (record toggle) or ?cam (scripted
+// camera) in the URL. Exposes engine refs for src/trailer/harness.js.
+{
+  const q = new URLSearchParams(location.search);
+  if (q.has('rec') || q.has('cam')) {
+    window.__cao = { renderer, scene, camera, player, input, terrainHeight, biomeId: biome.id };
+    import('./trailer/harness.js');
+  }
+}
