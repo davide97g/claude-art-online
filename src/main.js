@@ -145,7 +145,7 @@ const world = {
 // --- build everything ---
 const hud = new HUD();
 const floor = createFloor(scene, biome);
-createTown(scene, terrainHeight);
+createTown(scene, terrainHeight, biome);
 const player = new Player(scene, camera, input, terrainHeight);
 player.hud = hud;
 const blade = new Blade(player, scene, world, hud);

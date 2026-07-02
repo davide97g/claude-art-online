@@ -85,10 +85,11 @@ export const BIOMES = [
       ['barrel', 8, 28], ['crate_A_big', -10, 30], ['tent', 20, 38], ['resource_lumber', -18, 42],
     ],
     flags: false,
-    ruins: [ // Kenney Castle Kit piece names — reconcile with actual filenames in Task 4
-      { name: 'wall', x: 34, z: -8 }, { name: 'wall-corner', x: 38, z: -4 },
-      { name: 'tower', x: -40, z: -20 }, { name: 'wall', x: -36, z: -24 },
-      { name: 'gate', x: 12, z: -70 }, { name: 'tower', x: -22, z: -95 },
+    ruins: [
+      { name: 'tower-square-base', x: 34, z: -6 }, { name: 'wall', x: 37, z: -4 },
+      { name: 'wall-corner', x: 38, z: -9 }, { name: 'wall-half', x: 31, z: -8 },
+      { name: 'gate', x: 34, z: -2 }, { name: 'siege-catapult-demolished', x: 29, z: -5 },
+      { name: 'tower-square-base', x: -40, z: -20 }, { name: 'wall', x: -36, z: -24 },
     ],
     places: [
       { name: 'Frosthollow', x: 6, z: 34, r: 26 },
@@ -134,12 +135,13 @@ export const BIOMES = [
     ],
     flags: false,
     ruins: [ // mostly ruins on the top floor
-      { name: 'wall', x: 30, z: -6 }, { name: 'wall-corner', x: 34, z: -2 },
-      { name: 'tower', x: 26, z: -12 }, { name: 'wall', x: -32, z: -18 },
-      { name: 'tower', x: -36, z: -22 }, { name: 'gate', x: -28, z: -14 },
-      { name: 'wall', x: 8, z: -56 }, { name: 'tower', x: -10, z: -78 },
-      { name: 'wall-corner', x: 18, z: -94 }, { name: 'wall', x: -20, z: -100 },
-      { name: 'tower', x: 24, z: -108 }, { name: 'gate', x: 0, z: -70 },
+      { name: 'tower-square-base', x: 30, z: -6 }, { name: 'wall', x: 33, z: -4 },
+      { name: 'wall-corner', x: 34, z: -10 }, { name: 'wall-doorway', x: 27, z: -9 },
+      { name: 'gate', x: 30, z: -2 }, { name: 'siege-tower-demolished', x: 25, z: -7 },
+      { name: 'wall', x: -32, z: -18 }, { name: 'tower-square-base', x: -36, z: -22 },
+      { name: 'wall-corner', x: -28, z: -14 }, { name: 'siege-catapult-demolished', x: 8, z: -56 },
+      { name: 'wall', x: -10, z: -78 }, { name: 'wall-half', x: 18, z: -94 },
+      { name: 'tower-square-base', x: 24, z: -108 }, { name: 'gate', x: 0, z: -70 },
     ],
     places: [
       { name: 'Stormwatch', x: 6, z: 34, r: 24 },
