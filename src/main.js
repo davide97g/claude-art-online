@@ -8,6 +8,7 @@ import { Golem } from './combat/golem.js';
 import { HUD } from './ui/hud.js';
 import { manager } from './loading.js';
 import { getBiome } from './world/biomes.js';
+import { createWeather } from './world/weather.js';
 
 const biome = getBiome(new URLSearchParams(location.search).get('level'));
 
@@ -142,6 +143,7 @@ createTown(scene, terrainHeight);
 const player = new Player(scene, camera, input, terrainHeight);
 player.hud = hud;
 const blade = new Blade(player, scene, world, hud);
+const weather = createWeather(scene, biome.weather, { sun, hemi });
 const enemies = biome.enemies.map((e) =>
   e.type === 'dummy'
     ? new Dummy(scene, e.x, e.z, terrainHeight, hud)
@@ -164,6 +166,7 @@ function tick() {
   blade.update(sdt, dt, input, enemies, camera);
   for (const e of enemies) e.update(sdt, camera);
   floor.update(elapsed);
+  weather.update(dt, player.pos);
 
   hud.setGateNear(player.pos.distanceTo(floor.gatePos) < 14);
 
