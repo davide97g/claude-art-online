@@ -43,6 +43,11 @@
     #lock-go.ready { opacity: 1; pointer-events: auto; cursor: pointer; animation: gopulse 2s ease-in-out infinite; }
     #lock-go.ready:hover { background: rgba(127,212,255,0.14); }
     @keyframes gopulse { 0%,100% { box-shadow: 0 0 0 rgba(127,212,255,0); } 50% { box-shadow: 0 0 18px rgba(127,212,255,0.5); } }
+    #floor-select { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    #floor-select .floor { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border: 1px solid rgba(127,212,255,0.35); border-radius: 4px; color: #cfe6ff; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; text-decoration: none; opacity: 0.7; transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease; }
+    #floor-select .floor b { color: #7fd4ff; font-weight: 700; }
+    #floor-select .floor:hover { opacity: 1; background: rgba(127,212,255,0.1); }
+    #floor-select .floor.current { opacity: 1; border-color: #7fd4ff; background: rgba(127,212,255,0.18); pointer-events: none; cursor: default; }
   </style>
 </head>
 <body>
@@ -70,6 +75,11 @@
       <div id="load-tip"></div>
       <div id="load-bar-wrap"><div id="load-bar"></div></div>
       <div id="load-status">Loading…</div>
+      <div id="floor-select">
+        <a class="floor" data-level="1" href="?level=1"><b>I</b> Verdant Town</a>
+        <a class="floor" data-level="2" href="?level=2"><b>II</b> Frostbound</a>
+        <a class="floor" data-level="3" href="?level=3"><b>III</b> Storm Peaks</a>
+      </div>
       <div id="lock-go">Link start</div>
     </div>
   </div>

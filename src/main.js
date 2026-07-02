@@ -43,6 +43,12 @@ const overlay = document.getElementById('lock-overlay');
 const goBtn = document.getElementById('lock-go');
 let ready = false; // flips true when assets finish loading (or the safety net trips)
 
+// mark the picked floor in the loading-screen selector; the others are reload links
+const curFloor = document.querySelector(`#floor-select .floor[data-level="${biome.id}"]`);
+if (curFloor) curFloor.classList.add('current');
+const taglineEl = document.querySelector('#lock-content .tagline');
+if (taglineEl) taglineEl.textContent = `Floor ${biome.id} · ${biome.name}`;
+
 // background music: CC0 "Medieval: The Bard's Tale" by RandomMind (opengameart.org).
 // Autoplay is blocked until a user gesture, so it kicks off on the first Link-start click.
 const music = new Audio('/assets/audio/bards_tale.mp3');
