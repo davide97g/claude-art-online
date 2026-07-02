@@ -1,0 +1,16 @@
+# deps / build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# logs
+*.log
+
+# blender: keep source .blend + scripts; drop backups and render/check thumbnails
+*.blend1
+blender/*.png
+
+# os
+.DS_Store
+
+unity

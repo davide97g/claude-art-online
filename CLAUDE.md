@@ -1,0 +1,58 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+Single-player 3D browser action game inspired by Sword Art Online's Aincrad. Read `VISION.md` for tone/art-direction/scope; it is the design contract. Core rule from it: **ship a rung of the scope ladder before climbing** — 3 floors, not 100; one satisfying enemy beats ten mediocre ones.
+
+## Two parallel implementations
+
+- **`src/` — Three.js + Vite (vanilla JS, ES modules).** The primary, furthest-along version. This is what `package.json`/`index.html` run.
+- **`unity/` — Unity 6.x port.** Rung-1 gray-box (`Bootstrap.cs` builds the whole scene at runtime — no scene wiring, just press Play). See `unity/README.md`.
+
+They are independent codebases sharing the design, not shared code. When a task says "the game," assume the Three.js version unless Unity is named.
+
+## Commands
+
+Package manager is **bun** (`bun.lock` is the committed lockfile; `npm` also works — scripts are runtime-agnostic):
+
+```bash
+bun install
+bun run dev       # vite dev server; open the printed localhost URL, click "Link start"
+bun run build     # vite build → dist/
+bun run preview   # serve the built dist/
+```
+
+No test runner, no linter. `bun run typecheck` (`tsc --noEmit`) is the one static check — Vite transpiles TS but does **not** typecheck, so run this yourself before claiming a change is sound. `tsconfig.json` has `allowJs: true` / `checkJs: false`: existing `.js` runs untouched, new `.ts` files get strict checking, migrate file-by-file. Verify runtime changes by loading the dev server and watching the browser console (all runtime logs are prefixed `[CAO]`). Unity has no CLI build here: open `unity/` in Unity Hub and press Play.
+
+## Three.js architecture (the parts that span files)
+
+`src/main.js` is the only orchestrator: it builds the renderer/scene/lights, owns the input object and the game loop, and wires every system together. Everything else is a class it instantiates.
+
+**Hit-stop is a shared clock, and `sdt` vs `dt` is load-bearing.** `main.js` owns a `world` object with `timeScale` (dips to 0.07 on impact via `world.hitStop(dur)`, eases back to 1). Each frame it computes `sdt = dt * world.timeScale` and passes **both** to actors:
+- `sdt` (scaled) drives **gameplay** — movement, swing progress, enemy state timers. Freezes during hit-stop → that's the game-feel punch.
+- `dt` (real) drives things that must ignore hit-stop — camera easing, animation-mixer updates, cosmetic decays.
+Mixing these up silently breaks hit-stop or desyncs the camera. When adding an actor, mirror the existing `update(sdt, dt, ...)` signatures.
+
+**Enemy contract.** Every enemy (`combat/dummy.js`, `combat/golem.js`) exposes: `pos` (Vector3), `update(sdt, camera)`, and `takeHit(dmg, dir)`. `Blade.resolveHit` iterates the `enemies` array from `main.js` and calls `takeHit`; enemies that attack call `player.takeDamage(dmg, dir)` back. To add an enemy type, implement that shape and push it into the `enemies` array in `main.js`. Golem is the reference for stateful AI (idle→chase→windup→strike→recover→stagger, animated by rotating named model parts, not a skeleton).
+
+**Terrain is analytic, not raycast.** `world/floor.js` exports `terrainHeight(x, z)` — a pure function. The ground mesh, the player, every enemy, and every scattered prop all call it to sit on the ground. There is no physics/raycasting. If you change the height function, everything follows automatically; never hardcode Y positions for grounded things.
+
+**GLB loading degrades gracefully — never assume a model is present.** Every `GLTFLoader.load` has an error callback that logs `[CAO] ... missing` and continues with a gray-box primitive (capsule player, icosahedron golem, box sword). The game is fully playable with zero GLBs. Preserve this: new model loads must keep a working fallback and must not block the loop on `await`.
+
+## Asset ↔ code coupling (easy to break silently)
+
+Code reaches into GLBs by **node name and material name**. Changing these in Blender without updating code breaks features with no error:
+- `knight.glb`: player keeps node `1H_Sword` in-hand and hides a named armory list (`2H_Sword`, shields, etc.); animation clips are matched by regex on clip name (`idle`, `running_a`, `1h*slice_horizontal/diagonal`, `1h*chop`).
+- `golem.glb`: code animates parts named `Body`/`ArmL`/`ArmR`; eyes must use material named **`CAO_GolemEye`** (code flares its `emissiveIntensity` as the attack telegraph).
+- custom `sword.glb`: the glowing edge must use material named **`CAO_EdgeGlow`**.
+- landmark trees: root child named `TreeRoot*` gets its offset zeroed on load.
+
+## Blender workflow
+
+`blender/` holds Python (`bpy`) scripts Claude writes to generate hero-piece models; Davide follows in the Blender UI (MCP add-on when connected). Art rules (from `VISION.md`/`blender/README.md`): **low-poly, flat-shaded, vertex colors or flat materials, no PBR textures.** Custom modeling is reserved for hero pieces (sword, boss, gate); everything generic comes from CC0 packs (Kenney/Quaternius/KayKit). Export GLB → `public/assets/models/`, then wire it in (respecting the naming coupling above).
+
+## Doc drift — code is the source of truth
+
+The Three.js combat has moved past what `README.md`/`VISION.md` describe. Those still say "RMB blade stance + mouse-swipe to slash" (Pointer Lock swipe gestures). The **actual `src/` combat is left-click slash** with a random swing variation and buffered clicks that chain into combos (`combat/blade.js`, `index.html` hint). The **Unity port kept** the RMB-swipe stance (`BladeStance.cs`). If you touch combat, trust the code over the prose, and update the docs in the same change.

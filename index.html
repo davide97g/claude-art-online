@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Art Online</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0e14; font-family: system-ui, sans-serif; }
+    canvas { display: block; }
+    #hud { position: fixed; inset: 0; pointer-events: none; color: #eaf2ff; }
+    #floor-label { position: absolute; top: 18px; left: 20px; font-size: 14px; letter-spacing: 0.12em; opacity: 0.85; text-transform: uppercase; }
+    #kills { position: absolute; top: 40px; left: 20px; font-size: 12px; opacity: 0.6; }
+    #hp-wrap { position: absolute; top: 66px; left: 20px; width: 220px; height: 10px; background: rgba(255,255,255,0.15); border-radius: 5px; }
+    #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #35e07f, #a8f05f); border-radius: 5px; }
+    #hint { position: absolute; bottom: 24px; width: 100%; text-align: center; font-size: 13px; opacity: 0.65; }
+    #gate-msg { position: absolute; top: 42%; width: 100%; text-align: center; font-size: 18px; letter-spacing: 0.2em; color: #9fd8ff; opacity: 0; transition: opacity 0.4s; text-transform: uppercase; }
+    #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: rgba(255,255,255,0.7); }
+    #hit-flash { position: absolute; inset: 0; background: rgba(255, 32, 32, 0.55); opacity: 0; transition: opacity 0.3s; }
+    #death-msg { position: absolute; top: 38%; width: 100%; text-align: center; font-size: 46px; letter-spacing: 0.4em; color: #ff4040; opacity: 0; transition: opacity 0.7s; text-transform: uppercase; }
+    .dmg { position: absolute; font-size: 20px; font-weight: 700; color: #ffd34d; text-shadow: 0 2px 6px rgba(0,0,0,0.6); animation: dmgfloat 0.8s ease-out forwards; }
+    @keyframes dmgfloat { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-46px) scale(1.25); } }
+    #lock-overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(5, 8, 15, 0.82); color: #eaf2ff; cursor: pointer; z-index: 10; }
+    #lock-overlay h1 { font-size: 26px; font-weight: 600; letter-spacing: 0.3em; margin: 0; text-transform: uppercase; }
+    #lock-overlay p { font-size: 13px; opacity: 0.7; margin: 2px; }
+    #lock-overlay .go { margin-top: 14px; padding: 10px 28px; border: 1px solid #7fd4ff; border-radius: 4px; color: #7fd4ff; font-size: 14px; letter-spacing: 0.2em; }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div id="hit-flash"></div>
+    <div id="death-msg">You died</div>
+    <div id="floor-label">Floor 1 · Starting town outskirts</div>
+    <div id="kills">kills: 0</div>
+    <div id="hp-wrap"><div id="hp"></div></div>
+    <div id="gate-msg">Boss gate · sealed</div>
+    <div id="crosshair"></div>
+    <div id="hint">WASD move · Shift sprint · Mouse look · Left-click to attack · Esc to pause</div>
+  </div>
+  <div id="lock-overlay">
+    <h1>Claude Art Online</h1>
+    <p>Floor 1 awaits. The gate above is sealed.</p>
+    <p>WASD to move · left-click to swing your blade</p>
+    <p>Plays in fullscreen · press Esc anytime to pause and free your mouse</p>
+    <div class="go">Link start</div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
