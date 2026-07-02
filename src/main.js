@@ -47,7 +47,27 @@ let ready = false; // flips true when assets finish loading (or the safety net t
 const curFloor = document.querySelector(`#floor-select .floor[data-level="${biome.id}"]`);
 if (curFloor) curFloor.classList.add('current');
 const taglineEl = document.querySelector('#lock-content .tagline');
-if (taglineEl) taglineEl.textContent = `Floor ${biome.id} · ${biome.name}`;
+
+// Loading-screen previews: each floor has its own orbital-cam shot set at
+// public/assets/loading/floorN/{plaza,gate,vista}.jpg. The Ken Burns stack (below)
+// rotates through the *current* floor's set; hovering/focusing another floor in the
+// selector swaps the set live so you preview a level before its reload link commits.
+const SHOT_NAMES = ['plaza', 'gate', 'vista'];
+const floorShots = (id) => SHOT_NAMES.map((s) => `/assets/loading/floor${id}/${s}.jpg`);
+const kbEls = [...document.querySelectorAll('#lock-bg .kb')];
+const setPreview = (id) => {
+  floorShots(id).forEach((src, i) => { if (kbEls[i]) kbEls[i].style.backgroundImage = `url(${src})`; });
+  if (taglineEl) taglineEl.textContent = `Floor ${id} · ${getBiome(id).name}`;
+};
+[1, 2, 3].forEach((id) => floorShots(id).forEach((src) => { new Image().src = src; })); // preload → instant swaps
+setPreview(biome.id);
+document.querySelectorAll('#floor-select .floor').forEach((el) => {
+  const lvl = parseInt(el.dataset.level, 10);
+  el.addEventListener('mouseenter', () => setPreview(lvl));
+  el.addEventListener('focus', () => setPreview(lvl));
+  el.addEventListener('mouseleave', () => setPreview(biome.id));
+  el.addEventListener('blur', () => setPreview(biome.id));
+});
 
 // background music: CC0 "Medieval: The Bard's Tale" by RandomMind (opengameart.org).
 // Autoplay is blocked until a user gesture, so it kicks off on the first Link-start click.
@@ -110,8 +130,7 @@ setInterval(() => {
   }, 500);
 }, 5000);
 
-// Ken Burns: cross-fade the background stack, replaying each layer's zoom.
-const kbEls = [...document.querySelectorAll('#lock-bg .kb')];
+// Ken Burns: cross-fade the background stack (images set by setPreview), replaying each layer's zoom.
 let kbI = 0;
 setInterval(() => {
   kbEls[kbI].classList.remove('active');
