@@ -173,7 +173,10 @@ export const BIOMES = [
     tint: 0x8fae86,
     enemyTint: 0x6f9e5a,
     weather: 'pollen',
-    river: { path: [{ x: -60, z: 42 }, { x: -24, z: 20 }, { x: 8, z: -12 }, { x: -4, z: -52 }, { x: 26, z: -96 }], width: 7, depth: 3, level: -0.6, color: 0x3f6b6a },
+    // Path stays inside the flat valley floor (|x|<28) and clear of the combat lane (|x|<9, z<14) so the
+    // flat water level (-0.6) sits in the carved channel everywhere. Straying onto the valley walls (the
+    // 'valley' shape adds up to +22 at |x|=90) would lift the ground above the water and bury the river.
+    river: { path: [{ x: -5, z: 46 }, { x: -11, z: 22 }, { x: -15, z: -6 }, { x: -15, z: -28 }, { x: -13, z: -46 }], width: 7, depth: 3, level: -0.6, color: 0x3f6b6a },
     trees: [
       { path: 'decoration/nature/trees_A_large', count: 40, sMin: 1.0, sMax: 1.6 },
       { path: 'decoration/nature/trees_B_large', count: 40, sMin: 1.0, sMax: 1.6 },
@@ -201,7 +204,7 @@ export const BIOMES = [
     places: [
       { name: 'The Elderwood', x: 0, z: 30, r: 26 },
       { name: 'Mistfen Hollow', x: 0, z: -44, r: 34 },
-      { name: 'The Old River', x: 8, z: -12, r: 24 },
+      { name: 'The Old River', x: -15, z: -12, r: 24 },
       { name: 'The Sealed Gate', x: 0, z: -120, r: 20 },
     ],
     enemies: [
