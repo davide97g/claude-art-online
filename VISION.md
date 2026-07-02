@@ -23,8 +23,9 @@ Our art direction: **low-poly stylized, flat-shaded, strong silhouettes.**
 
 - Palette per floor: Floor 1 = warm greens/gold (Town of Beginnings vibe),
   saturated sky, soft fog hiding the floor's edge. Floor 2 = pale frost-blue
-  snowfield. Floor 3 = dark storm-grey highlands. Each floor also tints its
-  enemies, ruins and settlement to match.
+  snowfield. Floor 3 = dramatic sunset highlands (orange sky, low blazing sun,
+  purple-shadowed rock). Each floor also tints its enemies, ruins and settlement
+  to match, and carries its own weather (snow / wind) and named places.
 - Geometry: chunky, faceted. No PBR textures — vertex colors / flat materials.
 - The tower is always visible in the skybox above you: cheap, huge payoff.
 - Combat readability over realism: glowing blade trails, hit-stop, damage

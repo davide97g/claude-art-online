@@ -24,9 +24,9 @@ Each floor tints its terrain, lighting, fog, settlement, and the golem enemies t
 ## Controls
 
 - WASD — move, Shift — sprint
-- Mouse — camera
-- Hold right mouse button — blade stance (camera locks)
-- Swipe the mouse while in stance — slash in that direction. Faster swipe = more damage.
+- Mouse — look
+- Left-click — attack; click again mid-swing to chain the combo (each swing is a random slash)
+- M — mute music, Esc — pause / free the mouse
 
 ## Structure
 
