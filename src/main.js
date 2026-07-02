@@ -178,7 +178,7 @@ const floor = createFloor(scene, biome);
 createTown(scene, terrainHeight, biome);
 const player = new Player(scene, camera, input, terrainHeight, colliders);
 player.hud = hud;
-const villagers = new Villagers(scene, terrainHeight, colliders, 10);
+const villagers = new Villagers(scene, terrainHeight, colliders, biome);
 
 // --- scroll-to-zoom + fading slider feedback ---
 const zoomBar = document.getElementById('zoom-bar');
