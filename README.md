@@ -17,9 +17,9 @@ Three selectable floors, chosen via `?level=N` on the loading screen:
 
 1. **Verdant Town** — the starting village: warm sun, green terrain, full KayKit town.
 2. **Frostbound** — snowfield: cool palette, drifting snow, a sparse hamlet, and sunk/tilted castle ruins.
-3. **Storm Peaks** — jagged grey highlands: rain + periodic lightning, a small outpost, and the heaviest ruin clusters.
+3. **Storm Peaks** — jagged highlands at sunset: dramatic orange-and-purple palette, low blazing sun, blowing wind (no rain), a small outpost, and the heaviest ruin clusters.
 
-Each floor tints its terrain, lighting, fog, settlement, and the golem enemies to match (moss on Floor 1, frost-blue on Floor 2, storm-grey on Floor 3).
+Each floor tints its terrain, lighting, fog, settlement, and the golem enemies to match (moss on Floor 1, frost-blue on Floor 2, dusk-mauve on Floor 3).
 
 ## Controls
 
@@ -32,7 +32,7 @@ Each floor tints its terrain, lighting, fog, settlement, and the golem enemies t
 
 - `src/main.js` — renderer, input, game loop, hit-stop, `?level=N` floor selection
 - `src/world/biomes.js` — per-floor data (palette, weather, terrain, settlement, ruins, enemies, named places)
-- `src/world/weather.js` — player-following snow/rain + lightning particles
+- `src/world/weather.js` — player-following particles: snow / rain+lightning / wind
 - `src/world/floor.js` — terrain (analytic height), boss gate, sky/tower — parameterized by biome
 - `src/world/town.js` — populates a floor from its biome config: KayKit town, forest, rocks, distant hills, props, Kenney Castle Kit ruins
 - `src/player/controller.js` — third-person movement + camera, knight GLB loader

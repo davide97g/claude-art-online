@@ -109,16 +109,16 @@ export const BIOMES = [
   { // ---------- Floor 3: Storm Peaks ----------
     id: 3,
     name: 'Storm Peaks',
-    place0: 'Storm-wracked heights',
-    background: 0x3f4654,
-    fog: { color: 0x4a5260, near: 35, far: 130 },
-    hemi: { sky: 0x5a6472, ground: 0x2e333c, intensity: 0.6 },
-    sun: { color: 0x9fb0c4, intensity: 0.7, pos: [20, 70, 50] },
-    terrain: { lo: 0x4a4f57, hi: 0x7b8087, amp: 2.6, freq: 1.6 },
-    sky: { ceiling: 0x3a414e, core: 0x525b6a },
-    tint: 0x6b7280,
-    enemyTint: 0x6f7684,
-    weather: 'rain',
+    place0: 'Windswept sunset heights',
+    background: 0xe8804a,
+    fog: { color: 0xd98a5e, near: 40, far: 150 },
+    hemi: { sky: 0xffb27a, ground: 0x4a2f3e, intensity: 0.8 },
+    sun: { color: 0xff7a3c, intensity: 1.45, pos: [95, 26, 30] }, // low on the horizon = long dramatic sunset shadows
+    terrain: { lo: 0x5a3a48, hi: 0xc9794a, amp: 2.6, freq: 1.6 }, // dusky-purple shadow → orange sunlit rock
+    sky: { ceiling: 0xd47a52, core: 0xf0a860 },
+    tint: 0xe0955f,       // warm sunset wash over buildings/ruins/trees/mountains
+    enemyTint: 0x8a5f66,  // dusky mauve golems — read against the warm ground
+    weather: 'wind',
     trees: [
       { path: 'decoration/nature/tree_single_A_cut', count: 24, sMin: 0.7, sMax: 1.1 },
       { path: 'decoration/nature/tree_single_B_cut', count: 20, sMin: 0.7, sMax: 1.1 },
@@ -148,7 +148,7 @@ export const BIOMES = [
     ],
     places: [
       { name: 'Stormwatch', x: 6, z: 34, r: 24 },
-      { name: 'The Thunder Reach', x: 0, z: -44, r: 36 },
+      { name: 'The Howling Reach', x: 0, z: -44, r: 36 },
       { name: 'The Fallen Bastion', x: 30, z: -8, r: 24 },
       { name: 'The Sealed Gate', x: 0, z: -120, r: 20 },
     ],

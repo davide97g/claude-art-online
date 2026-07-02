@@ -1,12 +1,20 @@
 import * as THREE from 'three';
 
-// Cheap weather as a player-following particle box. Snow drifts slowly; rain falls
-// fast with periodic lightning that briefly flashes the sky + sun/hemi. Uses REAL dt
-// (cosmetic — ignores hit-stop, like the camera). null/unknown type → no-op.
+// Cheap weather as a player-following particle box. Each type sets particle count,
+// colour, downward fall, horizontal drift and a flutter; rain also flashes lightning.
+// Uses REAL dt (cosmetic — ignores hit-stop, like the camera). Unknown type → no-op.
 
 const BOX = 70;   // particle field extent; recentered on the player each frame
 const TOP = 40;   // recycle height above the player
 const WHITE = new THREE.Color(0xffffff);
+
+// Per-type tuning. fall = downward units/s; drift = +X units/s (wind blows sideways);
+// sway = flutter amplitude on swayAxis (0=X, 1=Y); lightning flashes sky+sun (rain only).
+const TYPES = {
+  snow: { count: 800,  color: 0xffffff, size: 0.22, fall: 6,  drift: 0,  sway: 1.2, swayAxis: 0, lightning: false },
+  rain: { count: 1200, color: 0xafc2d6, size: 0.16, fall: 34, drift: 0,  sway: 0,   swayAxis: 0, lightning: true  },
+  wind: { count: 650,  color: 0xe6b784, size: 0.14, fall: 2,  drift: 24, sway: 2.4, swayAxis: 1, lightning: false },
+};
 
 function field(count, color, size) {
   const g = new THREE.BufferGeometry();
@@ -22,15 +30,13 @@ function field(count, color, size) {
 }
 
 export function createWeather(scene, type, lights = {}) {
-  if (type !== 'snow' && type !== 'rain') return { update() {} };
+  const cfg = TYPES[type];
+  if (!cfg) return { update() {} };
 
-  const isSnow = type === 'snow';
-  const count = isSnow ? 800 : 1200;
-  const pts = field(count, isSnow ? 0xffffff : 0xafc2d6, isSnow ? 0.22 : 0.16);
+  const { count, fall, drift, sway, swayAxis, lightning } = cfg;
+  const pts = field(count, cfg.color, cfg.size);
   scene.add(pts);
   const arr = pts.geometry.attributes.position.array;
-  const fall = isSnow ? 6 : 34;   // units/sec
-  const sway = isSnow ? 1.2 : 0;
 
   const { sun, hemi } = lights;
   const sunBase = sun ? sun.intensity : 0;
@@ -46,7 +52,8 @@ export function createWeather(scene, type, lights = {}) {
       for (let i = 0; i < count; i++) {
         const j = i * 3;
         arr[j + 1] -= fall * dt;
-        if (sway) arr[j] += Math.sin(acc * 2 + i) * sway * dt;
+        if (drift) arr[j] += drift * dt;
+        if (sway) arr[j + swayAxis] += Math.sin(acc * 2 + i) * sway * dt;
         if (arr[j + 1] < cy - 4) arr[j + 1] = cy + TOP;
         if (arr[j] < cx - BOX / 2) arr[j] += BOX; else if (arr[j] > cx + BOX / 2) arr[j] -= BOX;
         if (arr[j + 2] < cz - BOX / 2) arr[j + 2] += BOX; else if (arr[j + 2] > cz + BOX / 2) arr[j + 2] -= BOX;
@@ -54,7 +61,7 @@ export function createWeather(scene, type, lights = {}) {
       pts.geometry.attributes.position.needsUpdate = true;
       acc += dt;
 
-      if (!isSnow) {
+      if (lightning) {
         strikeT -= dt;
         if (strikeT <= 0) { flash = 1; strikeT = 4 + (Math.sin(acc * 13.1) * 0.5 + 0.5) * 6; } // 4–10s
         if (flash > 0) {
