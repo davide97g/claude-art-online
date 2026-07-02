@@ -7,6 +7,9 @@ import { Dummy } from './combat/dummy.js';
 import { Golem } from './combat/golem.js';
 import { HUD } from './ui/hud.js';
 import { manager } from './loading.js';
+import { getBiome } from './world/biomes.js';
+
+const biome = getBiome(new URLSearchParams(location.search).get('level'));
 
 // --- renderer / scene ---
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -17,15 +20,15 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x9dc2ec);
-scene.fog = new THREE.Fog(0x9db8d9, 60, 175);
+scene.background = new THREE.Color(biome.background);
+scene.fog = new THREE.Fog(biome.fog.color, biome.fog.near, biome.fog.far);
 
 const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 3000);
 
-const hemi = new THREE.HemisphereLight(0xcfe5ff, 0x5b7a4a, 0.95);
+const hemi = new THREE.HemisphereLight(biome.hemi.sky, biome.hemi.ground, biome.hemi.intensity);
 scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xfff1d6, 1.25);
-sun.position.set(60, 90, 30);
+const sun = new THREE.DirectionalLight(biome.sun.color, biome.sun.intensity);
+sun.position.set(biome.sun.pos[0], biome.sun.pos[1], biome.sun.pos[2]);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = -60; sun.shadow.camera.right = 60;
@@ -134,22 +137,15 @@ const world = {
 
 // --- build everything ---
 const hud = new HUD();
-const floor = createFloor(scene);
+const floor = createFloor(scene, biome);
 createTown(scene, terrainHeight);
 const player = new Player(scene, camera, input, terrainHeight);
 player.hud = hud;
 const blade = new Blade(player, scene, world, hud);
-const enemies = [
-  // training dummies near spawn
-  new Dummy(scene, 5, -9, terrainHeight, hud),
-  new Dummy(scene, -7, -14, terrainHeight, hud),
-  // moss golems guarding the way to the gate
-  new Golem(scene, 14, -28, terrainHeight, hud, player, world),
-  new Golem(scene, -18, -42, terrainHeight, hud, player, world),
-  new Golem(scene, 8, -66, terrainHeight, hud, player, world),
-  new Golem(scene, -10, -88, terrainHeight, hud, player, world),
-  new Golem(scene, 20, -102, terrainHeight, hud, player, world),
-];
+const enemies = biome.enemies.map((e) =>
+  e.type === 'dummy'
+    ? new Dummy(scene, e.x, e.z, terrainHeight, hud)
+    : new Golem(scene, e.x, e.z, terrainHeight, hud, player, world));
 
 // --- loop ---
 const clock = new THREE.Clock();

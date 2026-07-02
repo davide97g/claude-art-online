@@ -5,26 +5,35 @@ function smoothstep(a, b, x) {
   return t * t * (3 - 2 * t);
 }
 
+// ponytail: module-level terrain profile, set once by createFloor. One level per
+// page load, so mutable module state is safe and keeps terrainHeight a pure-signature
+// export that player/enemies/town import directly.
+const PROFILE = { amp: 1.0, freq: 1.0 };
+
 // Analytic terrain height — shared by the mesh and the player, no raycasts needed.
 export function terrainHeight(x, z) {
   const d = Math.hypot(x, z);
   const flat = smoothstep(8, 40, d); // flat area around spawn
+  const f = PROFILE.freq;
   const h =
-    Math.sin(x * 0.05) * Math.cos(z * 0.045) * 2.2 +
-    Math.sin(x * 0.13 + 1.7) * Math.sin(z * 0.11) * 0.8;
-  return h * flat;
+    Math.sin(x * 0.05 * f) * Math.cos(z * 0.045 * f) * 2.2 +
+    Math.sin(x * 0.13 * f + 1.7) * Math.sin(z * 0.11 * f) * 0.8;
+  return h * flat * PROFILE.amp;
 }
 
 export const GATE_POS = new THREE.Vector3(0, 0, -120);
 
-export function createFloor(scene) {
+export function createFloor(scene, biome) {
+  PROFILE.amp = biome.terrain.amp;
+  PROFILE.freq = biome.terrain.freq;
+
   // --- ground ---
   const size = 320, seg = 130;
   const geo = new THREE.PlaneGeometry(size, size, seg, seg);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
   const colors = new Float32Array(pos.count * 3);
-  const lo = new THREE.Color(0x4e8c4a), hi = new THREE.Color(0x8cc063), c = new THREE.Color();
+  const lo = new THREE.Color(biome.terrain.lo), hi = new THREE.Color(biome.terrain.hi), c = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
     const h = terrainHeight(x, z);
@@ -71,7 +80,7 @@ export function createFloor(scene) {
   // (fog:false + pre-faded colors = cheap atmospheric distance)
   const ceiling = new THREE.Mesh(
     new THREE.CircleGeometry(900, 48),
-    new THREE.MeshBasicMaterial({ color: 0x7e94b5, fog: false, side: THREE.DoubleSide })
+    new THREE.MeshBasicMaterial({ color: biome.sky.ceiling, fog: false, side: THREE.DoubleSide })
   );
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.y = 380;
@@ -79,7 +88,7 @@ export function createFloor(scene) {
 
   const core = new THREE.Mesh(
     new THREE.CylinderGeometry(45, 55, 1200, 12),
-    new THREE.MeshBasicMaterial({ color: 0x93a7c4, fog: false })
+    new THREE.MeshBasicMaterial({ color: biome.sky.core, fog: false })
   );
   core.position.set(520, 200, -680);
   scene.add(core);
