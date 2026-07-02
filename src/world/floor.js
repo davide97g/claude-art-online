@@ -145,12 +145,54 @@ export function createFloor(scene, biome) {
     scene.add(rock);
   }
 
+  // --- river water: a translucent ribbon following the carved channel (cosmetic, real t) ---
+  let water = null;
+  if (biome.river) {
+    const p = biome.river.path, half = biome.river.width * 0.5;
+    const verts = [], uvs = [], idx = [];
+    let along = 0;
+    for (let i = 0; i < p.length; i++) {
+      const prev = p[Math.max(0, i - 1)], next = p[Math.min(p.length - 1, i + 1)];
+      const dx = next.x - prev.x, dz = next.z - prev.z, len = Math.hypot(dx, dz) || 1;
+      const nx = -dz / len, nz = dx / len; // left normal to the flow
+      verts.push(p[i].x + nx * half, biome.river.level, p[i].z + nz * half);
+      verts.push(p[i].x - nx * half, biome.river.level, p[i].z - nz * half);
+      if (i > 0) along += Math.hypot(p[i].x - p[i - 1].x, p[i].z - p[i - 1].z);
+      uvs.push(0, along * 0.15, 1, along * 0.15);
+    }
+    for (let i = 0; i < p.length - 1; i++) {
+      const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+    }
+    const wg = new THREE.BufferGeometry();
+    wg.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+    wg.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    wg.setIndex(idx);
+    wg.computeVertexNormals();
+    // cheap procedural ripple: soft blue-green noise, tiled + scrolled for flow
+    const cvs = document.createElement('canvas'); cvs.width = cvs.height = 64;
+    const cx = cvs.getContext('2d');
+    for (let i = 0; i < 64 * 64; i++) {
+      const v = 150 + Math.floor(Math.random() * 60);
+      cx.fillStyle = `rgb(${v},${v + 20},${v + 30})`;
+      cx.fillRect(i % 64, Math.floor(i / 64), 1, 1);
+    }
+    const tex = new THREE.CanvasTexture(cvs);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(1, 6);
+    water = new THREE.Mesh(wg, new THREE.MeshBasicMaterial({
+      color: biome.river.color, map: tex, transparent: true, opacity: 0.72, depthWrite: false, side: THREE.DoubleSide,
+    }));
+    water.renderOrder = 1;
+    scene.add(water);
+  }
+
   return {
     gatePos: new THREE.Vector3(GATE_POS.x, gy, GATE_POS.z),
     update(t) {
       ring.rotation.z = t * 0.4;
       portal.material.opacity = 0.65 + Math.sin(t * 1.6) * 0.1;
       for (const r of floaters) r.position.y = r.userData.baseY + Math.sin(t * 0.3 + r.userData.phase) * 2.5;
+      if (water) water.material.map.offset.y = -t * 0.06;
     },
   };
 }
