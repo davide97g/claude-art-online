@@ -1,0 +1,11 @@
+Townsfolk / NPC character models
+
+Source: Quaternius (https://quaternius.com)
+  - Ultimate Animated Character Pack (worker, oldclassy, chef, casual, viking, kimono, knight, knight_golden, elf, witch, wizard)
+  - RPG Character Pack (rpg_cleric, rpg_monk, rpg_ranger, rpg_rogue, rpg_warrior)
+
+License: CC0 1.0 Universal (Public Domain Dedication)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Converted from the packs' glTF to .glb with @gltf-transform/cli;
+RPG models: KHR_materials_unlit stripped (metallic 0) so they take scene lighting.

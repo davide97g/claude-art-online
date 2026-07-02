@@ -6,32 +6,37 @@ import { resolvePushOut } from '../player/collision.js';
 // Townsfolk that populate the spawn town (Floor 1) and the Royal Mile city (Floor 5).
 //
 // Two-tier, following the project's graceful-degradation rule:
-//  1. Real character GLBs — list them in NPC_MODELS below (empty until an asset pack is
-//     picked). Each is SkeletonUtils-cloned per instance (plain .clone() breaks skinning)
-//     and driven by its own AnimationMixer with idle/walk clips matched by name, exactly
-//     like knight.glb. Recommended CC0 source: Quaternius (matches the KayKit look, ~1.8u
-//     scale like the knight). Once GLBs are dropped in and named here, the crowd swaps
-//     from the fallback to the real models on load — no other change needed.
-//  2. Fallback — ~12 hand-built low-poly archetypes (below) so the town is populated and
-//     varied (man/woman/elder/child/merchant/noble/worker/youths) even with zero GLBs.
-//     These are stand-ins, NOT the final art; the GLB path replaces them.
+//  1. Real character GLBs — Quaternius CC0 packs (Ultimate Animated Character + RPG
+//     Characters, see public/assets/models/npc/LICENSE.txt): rigged, skinned, with
+//     Idle/Walk clips. Each is SkeletonUtils-cloned per instance (plain .clone() breaks
+//     skinning) and driven by its own AnimationMixer. The RPG adventurers in the list
+//     read as fellow players in the SAO fiction; the rest are villagers.
+//  2. Fallback — ~12 hand-built low-poly archetypes (below) so the town is populated
+//     even with zero GLBs. Fallback i dresses archetype (i % ARCHETYPES.length).
 //
-// Fill each entry: { file:'/assets/models/npc/xxx.glb', scale?:1 }. Clips matched /idle/i, /walk/i.
-// Order matches ARCHETYPES so model[i] dresses archetype[i]. Built in Blender
-// (blender/npc_build.py); static for now — they wander but have no idle/walk clips yet.
+// scale: raw models are ~3–4.3u tall, feet at y=0; scale brings each to ~1.6–1.9u
+// (children are Casual adults shrunk). Clips matched exact 'Idle'/'Walk' first, so
+// 'Idle_Weapon'/'Walk_Carry' variants don't win.
 const NPC_MODELS = [
-  { file: '/assets/models/npc/peasant_man.glb' },
-  { file: '/assets/models/npc/peasant_woman.glb' },
-  { file: '/assets/models/npc/elder_man.glb' },
-  { file: '/assets/models/npc/elder_woman.glb' },
-  { file: '/assets/models/npc/merchant.glb' },
-  { file: '/assets/models/npc/noble_woman.glb' },
-  { file: '/assets/models/npc/child_boy.glb' },
-  { file: '/assets/models/npc/child_girl.glb' },
-  { file: '/assets/models/npc/worker.glb' },
-  { file: '/assets/models/npc/young_woman.glb' },
-  { file: '/assets/models/npc/young_man.glb' },
-  { file: '/assets/models/npc/guard_civ.glb' },
+  { file: '/assets/models/npc/worker_male.glb', scale: 0.51 },
+  { file: '/assets/models/npc/worker_female.glb', scale: 0.48 },
+  { file: '/assets/models/npc/oldclassy_male.glb', scale: 0.45 },
+  { file: '/assets/models/npc/oldclassy_female.glb', scale: 0.44 },
+  { file: '/assets/models/npc/chef_male.glb', scale: 0.54 },
+  { file: '/assets/models/npc/elf.glb', scale: 0.45 },
+  { file: '/assets/models/npc/casual_male.glb', scale: 0.35 },
+  { file: '/assets/models/npc/casual_female.glb', scale: 0.34 },
+  { file: '/assets/models/npc/viking_male.glb', scale: 0.5 },
+  { file: '/assets/models/npc/kimono_female.glb', scale: 0.52 },
+  { file: '/assets/models/npc/rpg_monk.glb', scale: 0.58 },
+  { file: '/assets/models/npc/knight_male.glb', scale: 0.52 },
+  { file: '/assets/models/npc/rpg_warrior.glb', scale: 0.6 },
+  { file: '/assets/models/npc/rpg_rogue.glb', scale: 0.56 },
+  { file: '/assets/models/npc/rpg_ranger.glb', scale: 0.59 },
+  { file: '/assets/models/npc/rpg_cleric.glb', scale: 0.58 },
+  { file: '/assets/models/npc/witch.glb', scale: 0.46 },
+  { file: '/assets/models/npc/wizard.glb', scale: 0.47 },
+  { file: '/assets/models/npc/knight_golden_female.glb', scale: 0.55 },
 ];
 
 const PLAZA = new THREE.Vector2(0, 22); // spawn-town center (matches town.js CENTER)
@@ -182,8 +187,9 @@ export class Villagers {
     for (let i = 0; i < n; i++) {
       let x = 0, z = 0, tries = 0;
       do { [x, z] = candidate(region); } while (tries++ < 14 && this.inCollider(x, z, 0.8));
-      const typeIdx = i % ARCHETYPES.length; // cycle so every archetype shows before repeating
-      const g = makePerson(ARCHETYPES[typeIdx]);
+      // cycle over the longer list so every model (and archetype) shows before repeating
+      const typeIdx = i % Math.max(ARCHETYPES.length, NPC_MODELS.length || 1);
+      const g = makePerson(ARCHETYPES[typeIdx % ARCHETYPES.length]);
       g.position.set(x, getHeight(x, z), z);
       g.rotation.y = Math.random() * Math.PI * 2;
       scene.add(g);
@@ -227,14 +233,17 @@ export class Villagers {
     p.g.add(obj);
     const mixer = new THREE.AnimationMixer(obj);
     const find = (re) => g.animations.find((a) => re.test(a.name));
-    const idle = find(/idle/i);
-    const walk = find(/walk/i) || find(/locomotion/i) || find(/^move/i);
+    // exact name first: packs also ship 'Idle_Weapon' / 'Walk_Carry' variants
+    const idle = find(/^idle$/i) || find(/idle/i);
+    const walk = find(/^walk$/i) || find(/walk/i) || find(/locomotion/i) || find(/^move/i);
     p.actions = {
       idle: idle ? mixer.clipAction(idle) : null,
       walk: walk ? mixer.clipAction(walk) : null,
     };
+    if (p.actions.walk) p.actions.walk.timeScale = 0.6 + p.speed * 0.55; // stride roughly tracks stroll speed
     p.mixer = mixer;
-    if (p.actions.idle) { p.actions.idle.play(); p.current = p.actions.idle; }
+    // desync the crowd so clones don't animate in lockstep
+    if (p.actions.idle) { p.actions.idle.play(); p.current = p.actions.idle; p.current.time = Math.random() * p.current.getClip().duration; }
     else if (p.actions.walk) { p.actions.walk.play(); p.current = p.actions.walk; }
   }
 
