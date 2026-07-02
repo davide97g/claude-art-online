@@ -26,6 +26,15 @@ bun run preview   # serve the built dist/
 
 No test runner, no linter. `bun run typecheck` (`tsc --noEmit`) is the one static check — Vite transpiles TS but does **not** typecheck, so run this yourself before claiming a change is sound. `tsconfig.json` has `allowJs: true` / `checkJs: false`: existing `.js` runs untouched, new `.ts` files get strict checking, migrate file-by-file. Verify runtime changes by loading the dev server and watching the browser console (all runtime logs are prefixed `[CAO]`). Unity has no CLI build here: open `unity/` in Unity Hub and press Play.
 
+## Versioning — bump on every commit
+
+`package.json` `version` is the single source of truth for the game version. `main.js` imports it and renders it as a small `v0.1.0` hint at the bottom-left of the HUD (`#version` in `index.html`). **Before committing any work — large or small — bump the version** (edit `package.json`, no tooling needed), choosing the semver level by what changed:
+- **patch** (`0.1.0` → `0.1.1`) — fixes, tweaks, docs, small polish.
+- **minor** (`0.1.0` → `0.2.0`) — a new feature, floor, enemy, or system.
+- **major** (`0.1.0` → `1.0.0`) — a big milestone or breaking rework of the game.
+
+The bump goes in the same commit as the work, so the on-screen version always matches what's running.
+
 ## Three.js architecture (the parts that span files)
 
 `src/main.js` is the only orchestrator: it builds the renderer/scene/lights, owns the input object and the game loop, and wires every system together. Everything else is a class it instantiates.

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { createFloor, terrainHeight } from './world/floor.js';
-import { createTown } from './world/town.js';
+import { createTown, colliders } from './world/town.js';
 import { Player } from './player/controller.js';
 import { Blade } from './combat/blade.js';
 import { Dummy } from './combat/dummy.js';
@@ -9,6 +9,9 @@ import { HUD } from './ui/hud.js';
 import { manager } from './loading.js';
 import { getBiome } from './world/biomes.js';
 import { createWeather } from './world/weather.js';
+import pkg from '../package.json';
+
+document.getElementById('version').textContent = 'v' + pkg.version;
 
 const biome = getBiome(new URLSearchParams(location.search).get('level'));
 
@@ -69,9 +72,16 @@ document.querySelectorAll('#floor-select .floor').forEach((el) => {
   el.addEventListener('blur', () => setPreview(biome.id));
 });
 
-// background music: CC0 "Medieval: The Bard's Tale" by RandomMind (opengameart.org).
+// background music: per-floor loop, keyed by biome.id (see SOUNDTRACK.md).
+// Floors 4–5 not scored yet → fall back to the CC0 placeholder
+// "Medieval: The Bard's Tale" by RandomMind (opengameart.org).
 // Autoplay is blocked until a user gesture, so it kicks off on the first Link-start click.
-const music = new Audio('/assets/audio/bards_tale.mp3');
+const FLOOR_TRACKS = {
+  1: 'floor1_verdant_town.mp3',
+  2: 'floor2_frostbound.mp3',
+  3: 'floor3_storm_peaks.mp3',
+};
+const music = new Audio('/assets/audio/' + (FLOOR_TRACKS[biome.id] || 'bards_tale.mp3'));
 music.loop = true;
 music.volume = 0.35;
 
@@ -165,8 +175,23 @@ const world = {
 const hud = new HUD();
 const floor = createFloor(scene, biome);
 createTown(scene, terrainHeight, biome);
-const player = new Player(scene, camera, input, terrainHeight);
+const player = new Player(scene, camera, input, terrainHeight, colliders);
 player.hud = hud;
+
+// --- scroll-to-zoom + fading slider feedback ---
+const zoomBar = document.getElementById('zoom-bar');
+const zoomFill = document.getElementById('zoom-fill');
+let zoomHideT = 0;
+window.addEventListener('wheel', (e) => {
+  if (!input.locked) return;
+  const { camDistMin: lo, camDistMax: hi } = player;
+  player.camDistTarget = Math.max(lo, Math.min(hi, player.camDistTarget + e.deltaY * 0.006));
+  const zoomedIn = (hi - player.camDistTarget) / (hi - lo); // closer camera → fuller bar
+  zoomFill.style.height = `${zoomedIn * 100}%`;
+  zoomBar.classList.add('show');
+  clearTimeout(zoomHideT);
+  zoomHideT = setTimeout(() => zoomBar.classList.remove('show'), 900);
+}, { passive: true });
 hud.setFloor(`Floor ${biome.id}`, biome.place0);
 let currentPlace = null;
 function nearestPlace(p) {

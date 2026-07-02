@@ -162,17 +162,17 @@ Played when a gate opens and you climb: the motif resolving to major.
 
 ## Where each song goes (fill in as created)
 
-Drop finished files in `public/assets/audio/`. Current hookup: `src/main.js:74` hard-codes
-one loop (`bards_tale.mp3`, a CC0 placeholder). When per-floor tracks exist, wire them by
-`biome.id` (1–5) there. Suggested filenames:
+Drop finished files in `public/assets/audio/`. Exploration loops are wired by `biome.id`
+(1–5) in `src/main.js` via `FLOOR_TRACKS`; floors without a track fall back to the
+`bards_tale.mp3` placeholder. Filenames:
 
 | Floor | Exploration loop | Boss-gate cue | Status |
 |-------|------------------|---------------|--------|
-| 1 Verdant Town | `floor1_verdant_town.mp3` | `floor1_gate.mp3` | ☐ to create |
-| 2 Frostbound   | `floor2_frostbound.mp3`   | `floor2_gate.mp3` | ☐ to create |
-| 3 Storm Peaks  | `floor3_storm_peaks.mp3`  | `floor3_gate.mp3` | ☐ to create |
-| 4 The Elderwood| `floor4_elderwood.mp3`    | `floor4_gate.mp3` | ☐ to create |
-| 5 Craghold     | `floor5_craghold.mp3`     | `floor5_gate.mp3` | ☐ to create |
+| 1 Verdant Town | `floor1_verdant_town.mp3` | `floor1_gate.mp3` | ✅ wired |
+| 2 Frostbound   | `floor2_frostbound.mp3`   | `floor2_gate.mp3` | ✅ wired |
+| 3 Storm Peaks  | `floor3_storm_peaks.mp3`  | `floor3_gate.mp3` | ✅ wired |
+| 4 The Elderwood| `floor4_elderwood.mp3`    | `floor4_gate.mp3` | ☐ placeholder |
+| 5 Craghold     | `floor5_craghold.mp3`     | `floor5_gate.mp3` | ☐ placeholder |
 | — shared       | —                         | `victory_sting.mp3` | ☐ to create |
 
-Placeholder in use: `bards_tale.mp3` (CC0 "Medieval: The Bard's Tale" by RandomMind, opengameart.org).
+Placeholder in use (floors 4–5): `bards_tale.mp3` (CC0 "Medieval: The Bard's Tale" by RandomMind, opengameart.org).

@@ -16,10 +16,14 @@
     #gate-msg { position: absolute; top: 42%; width: 100%; text-align: center; font-size: 18px; letter-spacing: 0.2em; color: #9fd8ff; opacity: 0; transition: opacity 0.4s; text-transform: uppercase; }
     #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: rgba(255,255,255,0.7); }
     #hit-flash { position: absolute; inset: 0; background: rgba(255, 32, 32, 0.55); opacity: 0; transition: opacity 0.3s; }
+    #zoom-bar { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); width: 6px; height: 150px; background: rgba(255,255,255,0.14); border-radius: 3px; opacity: 0; transition: opacity 0.45s ease; }
+    #zoom-bar.show { opacity: 0.85; }
+    #zoom-fill { position: absolute; bottom: 0; left: 0; width: 100%; height: 50%; background: linear-gradient(180deg, #7fd4ff, #4aa8ff); border-radius: 3px; box-shadow: 0 0 10px rgba(127,212,255,0.55); transition: height 0.12s ease; }
     #death-msg { position: absolute; top: 38%; width: 100%; text-align: center; font-size: 46px; letter-spacing: 0.4em; color: #ff4040; opacity: 0; transition: opacity 0.7s; text-transform: uppercase; }
     .dmg { position: absolute; font-size: 20px; font-weight: 700; color: #ffd34d; text-shadow: 0 2px 6px rgba(0,0,0,0.6); animation: dmgfloat 0.8s ease-out forwards; }
     @keyframes dmgfloat { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-46px) scale(1.25); } }
     #place-badge { position: absolute; bottom: 62px; width: 100%; text-align: center; font-size: 22px; letter-spacing: 0.34em; text-transform: uppercase; color: #eaf2ff; text-shadow: 0 2px 18px rgba(0,0,0,0.85); opacity: 0; transform: translateY(8px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    #version { position: absolute; bottom: 10px; left: 12px; font-size: 11px; letter-spacing: 0.08em; opacity: 0.4; }
     #place-badge.show { opacity: 0.95; transform: translateY(0); }
     /* --- loading screen --- */
     #lock-overlay { position: fixed; inset: 0; overflow: hidden; background: #0b0e14; color: #eaf2ff; z-index: 10; opacity: 1; transition: opacity 0.6s ease; }
@@ -61,8 +65,10 @@
     <div id="hp-wrap"><div id="hp"></div></div>
     <div id="gate-msg">Boss gate · sealed</div>
     <div id="crosshair"></div>
-    <div id="hint">WASD move · Shift sprint · Mouse look · Left-click to attack · M mute · Esc to pause</div>
+    <div id="zoom-bar"><div id="zoom-fill"></div></div>
+    <div id="hint">WASD move · Space jump · Shift sprint · Mouse look · Scroll to zoom · Left-click to attack · M mute · Esc to pause</div>
     <div id="place-badge"></div>
+    <div id="version"></div>
   </div>
   <div id="lock-overlay">
     <!-- Ken Burns layers — background images are set per-floor by main.js (setPreview). -->

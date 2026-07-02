@@ -15,6 +15,14 @@ const BASE = '/assets/kaykit';
 const CASTLE = '/assets/castle';
 const SCALE = 4.2;
 
+// Cylinder colliders {x, z, r} the player pushes out of. Filled as buildings load
+// (async), so the reference is handed to the Player and populates over time.
+// ponytail: buildings only — rocks/trees/props stay passable. Add their transforms
+// here if the town should feel more solid.
+export const colliders = [];
+const BUILDING_R = 2.4;   // footprint radius of a SCALE'd KayKit house
+const CASTLE_R = 4.5;     // the Floor-5 castle reads much larger
+
 // seeded RNG → the town/forest layout is identical on every reload (nicer for tuning)
 function mulberry32(a) {
   return () => {
@@ -172,9 +180,11 @@ export function createTown(scene, getHeight, biome) {
   scene.add(root);
   const rng = mulberry32(1337);
   const tint = biome.tint;
+  colliders.length = 0; // fresh registry per build
 
   // --- settlement: hand-placed buildings, faced toward the cluster center ---
   for (const [type, color, x, z] of biome.settlement) {
+    colliders.push({ x, z, r: BUILDING_R });
     place(root, bp(type, color), x, z, getHeight, { yaw: facePlaza(x, z) })
       .then((m) => { if (m) tintObject(m, tint); });
   }
@@ -182,6 +192,7 @@ export function createTown(scene, getHeight, biome) {
   // --- dense city (Floor 5): buildings lining the Royal Mile spine + castle on the crag ---
   if (biome.city) {
     for (const b of cityLayout(biome.city, rng)) {
+      colliders.push({ x: b.x, z: b.z, r: b.castle ? CASTLE_R : BUILDING_R });
       place(root, bp(b.type, b.color), b.x, b.z, getHeight,
         { yaw: b.yaw, sink: b.castle ? 0.6 : 0.15, scale: b.castle ? SCALE * 1.6 : SCALE })
         .then((m) => { if (m) tintObject(m, tint); });

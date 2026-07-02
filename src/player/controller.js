@@ -1,17 +1,29 @@
 import * as THREE from 'three';
 import { gltf } from '../loading.js';
+import { resolvePushOut } from './collision.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
+const GRAVITY = 22;      // units/s² — snappy, arcade-y fall
+const JUMP_V = 8.5;      // launch speed → ~1.6 units peak
+const PLAYER_R = 0.4;    // matches the capsule radius (0.35) + a little slack
 
 export class Player {
-  constructor(scene, camera, input, getHeight) {
+  constructor(scene, camera, input, getHeight, colliders = []) {
     this.camera = camera;
     this.input = input;
     this.getHeight = getHeight;
+    this.colliders = colliders;
+    this.vy = 0;
+    this.grounded = true;
 
     this.pos = new THREE.Vector3(0, 0, 8);
     this.yaw = Math.PI;           // face -Z (toward the gate)
     this.pitch = 0.32;
+    // scroll-wheel zoom: camDist eases toward camDistTarget (set by main.js wheel handler)
+    this.camDist = 5.4;
+    this.camDistTarget = 5.4;
+    this.camDistMin = 2.6;
+    this.camDistMax = 11;
     this.shake = 0;
     this.speedNow = 0;
     this.attackT = 0;
@@ -146,6 +158,8 @@ export class Player {
     this.dead = false;
     this.hp = this.maxHp;
     this.pos.set(0, 0, 8);
+    this.vy = 0;
+    this.grounded = true;
     this.yaw = Math.PI;
     if (this.hud) { this.hud.setHP(1); this.hud.showDeath(false); }
   }
@@ -173,15 +187,27 @@ export class Player {
     if (keys['KeyD']) dir.sub(r);
     const sprint = keys['ShiftLeft'] || keys['ShiftRight'];
     const speed = sprint ? 9.5 : 5.5;
+    const half = 155;
     if (dir.lengthSq() > 0) {
       dir.normalize();
       this.pos.addScaledVector(dir, speed * sdt);
-      const half = 155;
-      this.pos.x = THREE.MathUtils.clamp(this.pos.x, -half, half);
-      this.pos.z = THREE.MathUtils.clamp(this.pos.z, -half, half);
     }
     this.speedNow = dir.lengthSq() > 0 ? speed : 0;
-    this.pos.y = this.getHeight(this.pos.x, this.pos.z);
+
+    // jump on Space when grounded (keys is {} while dead → no jumping when dead)
+    if (keys['Space'] && this.grounded) { this.vy = JUMP_V; this.grounded = false; }
+
+    // horizontal collision: push out of building cylinders, then clamp to the map bounds
+    const pushed = resolvePushOut(this.pos.x, this.pos.z, PLAYER_R, this.colliders);
+    this.pos.x = THREE.MathUtils.clamp(pushed.x, -half, half);
+    this.pos.z = THREE.MathUtils.clamp(pushed.z, -half, half);
+
+    // vertical: gravity + terrain landing. sdt (not dt) so a jump freezes with hit-stop,
+    // matching horizontal movement. Grounded → vy zeroes each frame, so it never accumulates.
+    const ground = this.getHeight(this.pos.x, this.pos.z);
+    this.vy -= GRAVITY * sdt;
+    this.pos.y += this.vy * sdt;
+    if (this.pos.y <= ground) { this.pos.y = ground; this.vy = 0; this.grounded = true; }
     this.group.position.copy(this.pos);
 
     // face movement direction; while attacking face where the camera looks
@@ -200,8 +226,9 @@ export class Player {
       this.mixer.update(sdt);
     }
 
-    // third-person camera
-    const dist = 5.4;
+    // third-person camera (dt, not sdt: zoom easing ignores hit-stop)
+    this.camDist += (this.camDistTarget - this.camDist) * Math.min(1, dt * 9);
+    const dist = this.camDist;
     const cy = Math.sin(this.pitch), ch = Math.cos(this.pitch);
     const off = new THREE.Vector3(
       Math.sin(this.yaw) * ch * dist,
