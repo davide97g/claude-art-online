@@ -22,7 +22,9 @@ fidelity. We can't match a AAA pipeline and shouldn't try.
 Our art direction: **low-poly stylized, flat-shaded, strong silhouettes.**
 
 - Palette per floor: Floor 1 = warm greens/gold (Town of Beginnings vibe),
-  saturated sky, soft fog hiding the floor's edge.
+  saturated sky, soft fog hiding the floor's edge. Floor 2 = pale frost-blue
+  snowfield. Floor 3 = dark storm-grey highlands. Each floor also tints its
+  enemies, ruins and settlement to match.
 - Geometry: chunky, faceted. No PBR textures — vertex colors / flat materials.
 - The tower is always visible in the skybox above you: cheap, huge payoff.
 - Combat readability over realism: glowing blade trails, hit-stop, damage
@@ -37,7 +39,8 @@ looks intentional rather than "budget realistic", and runs at 60fps in a browser
    the slash direction (Pointer Lock API). Gestures = sword skills.
    This is the make-or-break mechanic. Prototyped gray-box FIRST.
 2. **Open floors, not open world** — each floor is a bounded ~300–400m diorama
-   with fog-veiled edges. Explore, fight mobs, find the boss gate.
+   with fog-veiled edges. Explore, fight mobs, find the boss gate. A floor
+   picker (`?level=N`) lets you jump straight to any of the 3 floors.
 3. **Boss as gate** — each floor's boss is a puzzle of patterns.
    Beating it is the only way up. Floor count target: 3. Not 100. Three.
 4. **Feel over content** — one enemy that's satisfying to fight beats ten that aren't.
@@ -56,8 +59,11 @@ looks intentional rather than "budget realistic", and runs at 60fps in a browser
 1. Gray-box: capsule player, third-person camera, swipe combat vs. dummy
 2. Floor 1 terrain + town shell from CC0 kit, tower skybox
 3. One mob type with wind-up/attack/death states
-4. Floor 1 boss + gate → floor 2 stub
-5. Polish pass: trails, hit-stop, damage numbers, sound
+4. Floor 1 sealed boss gate; Floors 2-3 as distinct biomes (frostbound
+   snowfield, storm peaks) with their own weather, settlements, ruins and
+   tinted enemies, reachable via a `?level=N` floor picker
+5. Floor bosses (each gate is currently sealed-and-message-only, not yet a fight)
+6. Polish pass: trails, hit-stop, damage numbers, sound
 
 ## Non-goals
 

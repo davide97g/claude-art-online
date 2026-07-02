@@ -163,7 +163,7 @@ const weather = createWeather(scene, biome.weather, { sun, hemi });
 const enemies = biome.enemies.map((e) =>
   e.type === 'dummy'
     ? new Dummy(scene, e.x, e.z, terrainHeight, hud)
-    : new Golem(scene, e.x, e.z, terrainHeight, hud, player, world));
+    : new Golem(scene, e.x, e.z, terrainHeight, hud, player, world, biome.enemyTint));
 
 // --- loop ---
 const clock = new THREE.Clock();

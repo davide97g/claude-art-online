@@ -24,11 +24,12 @@ function loadProto() {
 const AGGRO = 13, DEAGGRO = 20, REACH = 2.1, HIT_RANGE = 2.6;
 
 export class Golem {
-  constructor(scene, x, z, getHeight, hud, player, world) {
+  constructor(scene, x, z, getHeight, hud, player, world, tint = null) {
     this.getHeight = getHeight;
     this.hud = hud;
     this.player = player;
     this.world = world;
+    this.tint = tint;
     this.home = new THREE.Vector3(x, getHeight(x, z), z);
     this.pos = this.home.clone();
     this.alive = true;
@@ -77,6 +78,7 @@ export class Golem {
       if (!o.isMesh) return;
       o.castShadow = true;
       o.material = o.material.clone(); // per-instance mats: eye flare + hit flash
+      if (this.tint != null) o.material.color.multiply(new THREE.Color(this.tint));
       this.flashMats.push(o.material);
       if (o.material.name === 'CAO_GolemEye') this.eyeMats.push(o.material);
     });

@@ -14,6 +14,7 @@ export const BIOMES = [
     terrain: { lo: 0x4e8c4a, hi: 0x8cc063, amp: 1.0, freq: 1.0 },
     sky: { ceiling: 0x7e94b5, core: 0x93a7c4 },
     tint: null,
+    enemyTint: null,
     weather: null,
     trees: [
       { path: 'decoration/nature/tree_single_A', count: 120, sMin: 0.8, sMax: 1.5 },
@@ -66,6 +67,7 @@ export const BIOMES = [
     terrain: { lo: 0x9fb2c4, hi: 0xeaf1f7, amp: 1.3, freq: 1.0 },
     sky: { ceiling: 0x9fb0c4, core: 0xb8c6d8 },
     tint: 0xcfd8e2,
+    enemyTint: 0x9fc4e0,
     weather: 'snow',
     trees: [
       { path: 'decoration/nature/tree_single_A_cut', count: 40, sMin: 0.8, sMax: 1.3 },
@@ -115,6 +117,7 @@ export const BIOMES = [
     terrain: { lo: 0x4a4f57, hi: 0x7b8087, amp: 2.6, freq: 1.6 },
     sky: { ceiling: 0x3a414e, core: 0x525b6a },
     tint: 0x6b7280,
+    enemyTint: 0x6f7684,
     weather: 'rain',
     trees: [
       { path: 'decoration/nature/tree_single_A_cut', count: 24, sMin: 0.7, sMax: 1.1 },
