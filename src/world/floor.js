@@ -5,27 +5,65 @@ function smoothstep(a, b, x) {
   return t * t * (3 - 2 * t);
 }
 
-// ponytail: module-level terrain profile, set once by createFloor. One level per
-// page load, so mutable module state is safe and keeps terrainHeight a pure-signature
-// export that player/enemies/town import directly.
-const PROFILE = { amp: 1.0, freq: 1.0 };
+// ponytail: module-level terrain profile + river, set once per page load by
+// configureTerrain. One level per load, so mutable module state is safe and keeps
+// terrainHeight a pure-signature export the player/enemies/town import directly.
+const PROFILE = { amp: 1.0, freq: 1.0, shape: 'rolling', crag: null };
+let RIVER = null; // { segs: [{ ax, az, bx, bz }], width, depth }
+
+// distance from point (px,pz) to segment (ax,az)-(bx,bz)
+function distSeg(px, pz, ax, az, bx, bz) {
+  const dx = bx - ax, dz = bz - az;
+  const l2 = dx * dx + dz * dz || 1;
+  let t = ((px - ax) * dx + (pz - az) * dz) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
+}
+
+function riverDepth(x, z) {
+  if (!RIVER) return 0;
+  let best = Infinity;
+  for (const s of RIVER.segs) { const d = distSeg(x, z, s.ax, s.az, s.bx, s.bz); if (d < best) best = d; }
+  // 0 outside the width, ramps to full depth toward the centreline
+  return smoothstep(RIVER.width, RIVER.width * 0.35, best) * RIVER.depth;
+}
+
+// Set the terrain profile + river from a biome. Called by createFloor and by tests.
+export function configureTerrain(biome) {
+  PROFILE.amp = biome.terrain.amp;
+  PROFILE.freq = biome.terrain.freq;
+  PROFILE.shape = biome.terrain.shape || 'rolling';
+  PROFILE.crag = biome.terrain.crag || null;
+  if (biome.river) {
+    const p = biome.river.path, segs = [];
+    for (let i = 0; i < p.length - 1; i++) segs.push({ ax: p[i].x, az: p[i].z, bx: p[i + 1].x, bz: p[i + 1].z });
+    RIVER = { segs, width: biome.river.width, depth: biome.river.depth };
+  } else {
+    RIVER = null;
+  }
+}
 
 // Analytic terrain height — shared by the mesh and the player, no raycasts needed.
 export function terrainHeight(x, z) {
   const d = Math.hypot(x, z);
   const flat = smoothstep(8, 40, d); // flat area around spawn
   const f = PROFILE.freq;
-  const h =
-    Math.sin(x * 0.05 * f) * Math.cos(z * 0.045 * f) * 2.2 +
-    Math.sin(x * 0.13 * f + 1.7) * Math.sin(z * 0.11 * f) * 0.8;
-  return h * flat * PROFILE.amp;
+  let h = (Math.sin(x * 0.05 * f) * Math.cos(z * 0.045 * f) * 2.2 +
+           Math.sin(x * 0.13 * f + 1.7) * Math.sin(z * 0.11 * f) * 0.8) * flat * PROFILE.amp;
+  if (PROFILE.shape === 'valley') {
+    h += smoothstep(30, 90, Math.abs(x)) * 22;              // side mountain walls, flat floor
+  } else if (PROFILE.shape === 'crag' && PROFILE.crag) {
+    const c = PROFILE.crag;
+    const dc = Math.hypot(x - c.x, z - c.z);
+    h += c.height * Math.exp(-(dc * dc) / (2 * c.radius * c.radius)); // Gaussian crag
+  }
+  return h - riverDepth(x, z);
 }
 
 export const GATE_POS = new THREE.Vector3(0, 0, -120);
 
 export function createFloor(scene, biome) {
-  PROFILE.amp = biome.terrain.amp;
-  PROFILE.freq = biome.terrain.freq;
+  configureTerrain(biome);
 
   // --- ground ---
   const size = 320, seg = 130;
