@@ -41,6 +41,8 @@ Mixing these up silently breaks hit-stop or desyncs the camera. When adding an a
 
 **GLB loading degrades gracefully — never assume a model is present.** Every `GLTFLoader.load` has an error callback that logs `[CAO] ... missing` and continues with a gray-box primitive (capsule player, icosahedron golem, box sword). The game is fully playable with zero GLBs. Preserve this: new model loads must keep a working fallback and must not block the loop on `await`.
 
+**Floor population lives in `world/town.js`, not `floor.js`.** `floor.js` now owns only terrain + gate + sky; `town.js` places everything on top of it (KayKit town buildings, instanced forest, rocks, distant hill/mountain silhouettes, props, flags) and is called from `main.js` right after `createFloor`. It loads the **KayKit Medieval Hexagon Pack** from `public/assets/kaykit/` — these are `.gltf` (+ `.bin` + a co-located `hexagons_medieval.png` atlas per folder), *not* the self-contained `.glb`s in `models/`, so keep each `.gltf` beside its texture when moving files. KayKit hex units are tiny (a house ≈0.9 tall); `town.js`'s `SCALE` (~4.2) brings them to the player's world scale, and model origins sit at the base so placing at `terrainHeight(x,z)` grounds them. Layout uses a seeded RNG (stable across reloads) and keeps the spawn plaza + gate corridor clear via `blocked()`. Note: the player spawns facing **+Z (into the town)**; the sealed gate is behind them at `-Z` (the `floor.js` comment saying "face −Z" predates this — `forward()` at `yaw=π` is `+Z`).
+
 ## Asset ↔ code coupling (easy to break silently)
 
 Code reaches into GLBs by **node name and material name**. Changing these in Blender without updating code breaks features with no error:

@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 function smoothstep(a, b, x) {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -42,65 +41,9 @@ export function createFloor(scene) {
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // --- scattered low-poly trees + rocks (instanced: 1 draw call each) ---
-  const rng = () => Math.random() * 2 - 1;
-  const spots = [];
-  while (spots.length < 140) {
-    const x = rng() * 150, z = rng() * 150;
-    if (Math.hypot(x, z) < 22) continue;                    // keep spawn clear
-    if (Math.hypot(x - GATE_POS.x, z - GATE_POS.z) < 20) continue; // keep gate clear
-    spots.push([x, z]);
-  }
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), v = new THREE.Vector3();
-
-  const trunkGeo = new THREE.CylinderGeometry(0.16, 0.24, 1.2, 5);
-  const leafGeo = new THREE.ConeGeometry(1.3, 2.6, 6);
-  const trunks = new THREE.InstancedMesh(trunkGeo, new THREE.MeshLambertMaterial({ color: 0x6d4c33, flatShading: true }), spots.length);
-  const leaves = new THREE.InstancedMesh(leafGeo, new THREE.MeshLambertMaterial({ color: 0x3f7d3b, flatShading: true }), spots.length);
-  spots.forEach(([x, z], i) => {
-    const h = terrainHeight(x, z), k = 0.7 + Math.random() * 0.8;
-    q.setFromAxisAngle(v.set(0, 1, 0), Math.random() * Math.PI * 2);
-    s.setScalar(k);
-    m.compose(v.set(x, h + 0.6 * k, z), q, s); trunks.setMatrixAt(i, m);
-    m.compose(v.set(x, h + (1.2 + 1.3) * k, z), q, s); leaves.setMatrixAt(i, m);
-  });
-  trunks.castShadow = leaves.castShadow = true;
-  scene.add(trunks, leaves);
-
-  const rockGeo = new THREE.IcosahedronGeometry(0.7, 0);
-  const rocks = new THREE.InstancedMesh(rockGeo, new THREE.MeshLambertMaterial({ color: 0x8a8f96, flatShading: true }), 50);
-  for (let i = 0; i < 50; i++) {
-    const x = rng() * 150, z = rng() * 150;
-    q.setFromEuler(new THREE.Euler(rng(), rng(), rng()));
-    s.set(0.6 + Math.random(), 0.4 + Math.random() * 0.5, 0.6 + Math.random());
-    m.compose(v.set(x, terrainHeight(x, z) + 0.1, z), q, s);
-    rocks.setMatrixAt(i, m);
-  }
-  rocks.castShadow = true;
-  scene.add(rocks);
-
-  // --- ancient trees (Blender-made landmarks among the instanced filler) ---
-  const loader = new GLTFLoader();
-  for (const [file, count] of [['tree_old_a.glb', 8], ['tree_old_b.glb', 7]]) {
-    loader.load(`/assets/models/${file}`, (g) => {
-      const tree = g.scene;
-      tree.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-      // zero the authored root offset so clones sit exactly where placed
-      for (const c of tree.children) if (c.name.startsWith('TreeRoot')) c.position.set(0, 0, 0);
-      let placed = 0, guard = 0;
-      while (placed < count && guard++ < 400) {
-        const x = rng() * 145, z = rng() * 145;
-        if (Math.hypot(x, z) < 28) continue;
-        if (Math.hypot(x - GATE_POS.x, z - GATE_POS.z) < 24) continue;
-        const t = tree.clone(true);
-        t.scale.setScalar(0.8 + Math.random() * 0.6);
-        t.rotation.y = Math.random() * Math.PI * 2;
-        t.position.set(x, terrainHeight(x, z) - 0.05, z);
-        scene.add(t);
-        placed++;
-      }
-    }, undefined, () => console.log(`[CAO] ${file} missing`));
-  }
+  // Vegetation, town buildings & props are placed by world/town.js (KayKit models),
+  // so the map reads as a coherent low-poly world instead of procedural filler.
+  const rng = () => Math.random() * 2 - 1; // kept: the sky floaters below still use it
 
   // --- boss gate (sealed) ---
   const gate = new THREE.Group();

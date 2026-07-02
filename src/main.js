@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createFloor, terrainHeight } from './world/floor.js';
+import { createTown } from './world/town.js';
 import { Player } from './player/controller.js';
 import { Blade } from './combat/blade.js';
 import { Dummy } from './combat/dummy.js';
@@ -34,7 +35,15 @@ scene.add(sun);
 // --- input (pointer lock; per-frame mouse deltas) ---
 const input = { keys: {}, dx: 0, dy: 0, attackQueued: false, locked: false };
 const overlay = document.getElementById('lock-overlay');
+
+// background music: CC0 "Medieval: The Bard's Tale" by RandomMind (opengameart.org).
+// Autoplay is blocked until a user gesture, so it kicks off on the first Link-start click.
+const music = new Audio('/assets/audio/bards_tale.mp3');
+music.loop = true;
+music.volume = 0.35;
+
 overlay.addEventListener('click', async () => {
+  music.play().catch(() => {}); // no-op if already playing / gesture didn't count
   try { await document.documentElement.requestFullscreen(); } catch { /* fullscreen optional */ }
   renderer.domElement.requestPointerLock();
 });
@@ -51,7 +60,10 @@ document.addEventListener('mousedown', (e) => {
   if (e.button === 0 && input.locked) input.attackQueued = true; // buffered: fires as soon as the current swing ends
 });
 document.addEventListener('contextmenu', (e) => e.preventDefault());
-document.addEventListener('keydown', (e) => { input.keys[e.code] = true; });
+document.addEventListener('keydown', (e) => {
+  input.keys[e.code] = true;
+  if (e.code === 'KeyM') music.muted = !music.muted; // toggle background music
+});
 document.addEventListener('keyup', (e) => { input.keys[e.code] = false; });
 
 // --- world (hit-stop lives here) ---
@@ -64,6 +76,7 @@ const world = {
 // --- build everything ---
 const hud = new HUD();
 const floor = createFloor(scene);
+createTown(scene, terrainHeight);
 const player = new Player(scene, camera, input, terrainHeight);
 player.hud = hud;
 const blade = new Blade(player, scene, world, hud);
