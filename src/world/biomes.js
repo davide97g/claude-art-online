@@ -159,10 +159,109 @@ export const BIOMES = [
       { type: 'golem', x: 30, z: -50 },
     ],
   },
+
+  { // ---------- Floor 4: The Elderwood (deep ancient forest) ----------
+    id: 4,
+    name: 'The Elderwood',
+    place0: 'Heart of the ancient wood',
+    background: 0x2f4a3a,
+    fog: { color: 0x35513f, near: 26, far: 105 },
+    hemi: { sky: 0x9fc7a0, ground: 0x24301f, intensity: 0.7 },
+    sun: { color: 0xffe6a8, intensity: 0.95, pos: [50, 70, -40] },
+    terrain: { lo: 0x2c3d24, hi: 0x5f8544, amp: 1.6, freq: 1.2, shape: 'valley' },
+    sky: { ceiling: 0x3a5240, core: 0x557a4f },
+    tint: 0x8fae86,
+    enemyTint: 0x6f9e5a,
+    weather: 'pollen',
+    river: { path: [{ x: -60, z: 42 }, { x: -24, z: 20 }, { x: 8, z: -12 }, { x: -4, z: -52 }, { x: 26, z: -96 }], width: 7, depth: 3, level: -0.6, color: 0x3f6b6a },
+    trees: [
+      { path: 'decoration/nature/trees_A_large', count: 40, sMin: 1.0, sMax: 1.6 },
+      { path: 'decoration/nature/trees_B_large', count: 40, sMin: 1.0, sMax: 1.6 },
+      { path: 'decoration/nature/trees_A_medium', count: 55, sMin: 0.9, sMax: 1.4 },
+      { path: 'decoration/nature/trees_B_medium', count: 55, sMin: 0.9, sMax: 1.4 },
+      { path: 'decoration/nature/tree_single_A', count: 45, sMin: 0.8, sMax: 1.3 },
+      { path: 'decoration/nature/tree_single_B', count: 45, sMin: 0.8, sMax: 1.3 },
+    ],
+    rocks: [
+      { path: 'decoration/nature/rock_single_A', count: 30, sMin: 2, sMax: 6 },
+      { path: 'decoration/nature/rock_single_C', count: 25, sMin: 2, sMax: 5 },
+    ],
+    mountains: ['mountain_A_grass_trees', 'mountain_B_grass_trees', 'mountain_C_grass_trees', 'hills_A_trees', 'hills_B_trees'],
+    clouds: 3,
+    settlement: [ // small overgrown woodcutter's camp
+      ['lumbermill', 'green', 10, 30], ['home_A', 'green', -12, 34], ['home_B', 'green', 16, 40], ['well', 'green', 0, 30],
+    ],
+    props: [
+      ['crate_A_big', 6, 28], ['barrel', -6, 32], ['resource_lumber', 14, 34], ['weaponrack', -10, 30],
+    ],
+    flags: false,
+    ruins: [
+      { name: 'wall', x: -30, z: -18 }, { name: 'wall-corner', x: -34, z: -22 }, { name: 'wall-half', x: 22, z: -60 },
+    ],
+    places: [
+      { name: 'The Elderwood', x: 0, z: 30, r: 26 },
+      { name: 'Mistfen Hollow', x: 0, z: -44, r: 34 },
+      { name: 'The Old River', x: 8, z: -12, r: 24 },
+      { name: 'The Sealed Gate', x: 0, z: -120, r: 20 },
+    ],
+    enemies: [
+      { type: 'golem', x: 12, z: -24 }, { type: 'golem', x: -16, z: -44 },
+      { type: 'golem', x: 8, z: -68 }, { type: 'golem', x: -10, z: -92 },
+      { type: 'golem', x: 22, z: -104 }, { type: 'golem', x: -24, z: -70 },
+    ],
+  },
+
+  { // ---------- Floor 5: Craghold (Edinburgh-inspired medieval city) ----------
+    id: 5,
+    name: 'Craghold',
+    place0: 'Gates of the high city',
+    background: 0x9fc8ea,
+    fog: { color: 0xbcd4ea, near: 70, far: 220 },
+    hemi: { sky: 0xdcecff, ground: 0x6b6152, intensity: 1.0 },
+    sun: { color: 0xfff3d6, intensity: 1.3, pos: [70, 95, 40] },
+    terrain: { lo: 0x6f6656, hi: 0xb8ae95, amp: 1.0, freq: 1.0, shape: 'crag', crag: { x: 0, z: 95, height: 20, radius: 26 } },
+    sky: { ceiling: 0x8aa6c8, core: 0xa8c0dc },
+    tint: null,
+    enemyTint: 0x9aa0a8,
+    weather: null,
+    trees: [
+      { path: 'decoration/nature/tree_single_A', count: 12, sMin: 0.8, sMax: 1.2 },
+      { path: 'decoration/nature/tree_single_B', count: 10, sMin: 0.8, sMax: 1.2 },
+    ],
+    rocks: [
+      { path: 'decoration/nature/rock_single_A', count: 10, sMin: 3, sMax: 7 },
+      { path: 'decoration/nature/rock_single_B', count: 8, sMin: 3, sMax: 6 },
+    ],
+    mountains: ['mountain_A', 'mountain_B', 'mountain_C', 'hills_A', 'hills_B'],
+    clouds: 5,
+    city: {
+      spineZ: [16, 82], halfWidth: 11, step: 7, jitter: 2.2,
+      palette: ['green', 'red', 'yellow'],
+      types: ['home_A', 'home_B', 'tavern', 'market', 'blacksmith', 'church', 'barracks', 'tower_A', 'tower_B'],
+      castle: { type: 'castle', color: 'yellow', x: 0, z: 95 },
+    },
+    settlement: [],
+    props: [
+      ['crate_A_big', 5, 24], ['barrel', -5, 26], ['weaponrack', 6, 50], ['target', -7, 54], ['crate_open', 0, 20],
+    ],
+    flags: 'spine',
+    ruins: [],
+    places: [
+      { name: 'Grassmarket', x: 0, z: 22, r: 22 },
+      { name: 'The Royal Mile', x: 0, z: 50, r: 30 },
+      { name: 'Castle Rock', x: 0, z: 95, r: 26 },
+      { name: 'The Sealed Gate', x: 0, z: -120, r: 20 },
+    ],
+    enemies: [
+      { type: 'golem', x: 12, z: -24 }, { type: 'golem', x: -16, z: -44 },
+      { type: 'golem', x: 8, z: -68 }, { type: 'golem', x: -10, z: -92 },
+      { type: 'golem', x: 22, z: -104 }, { type: 'golem', x: -24, z: -70 },
+    ],
+  },
 ];
 
-// Parse ?level=N (1..3), clamp, return the biome. Defaults to Floor 1.
+// Parse ?level=N (1..5), clamp, return the biome. Defaults to Floor 1.
 export function getBiome(param) {
-  const n = Math.min(3, Math.max(1, parseInt(param, 10) || 1));
+  const n = Math.min(BIOMES.length, Math.max(1, parseInt(param, 10) || 1));
   return BIOMES[n - 1];
 }
