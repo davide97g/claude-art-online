@@ -14,6 +14,7 @@ const TYPES = {
   snow: { count: 800,  color: 0xffffff, size: 0.22, fall: 6,  drift: 0,  sway: 1.2, swayAxis: 0, lightning: false },
   rain: { count: 1200, color: 0xafc2d6, size: 0.16, fall: 34, drift: 0,  sway: 0,   swayAxis: 0, lightning: true  },
   wind: { count: 650,  color: 0xe6b784, size: 0.14, fall: 2,  drift: 24, sway: 2.4, swayAxis: 1, lightning: false },
+  pollen: { count: 500, color: 0xd8c079, size: 0.13, fall: 1.2, drift: 3, sway: 1.4, swayAxis: 0, lightning: false },
 };
 
 function field(count, color, size) {
