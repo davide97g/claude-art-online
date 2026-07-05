@@ -3,6 +3,7 @@ import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { gltf } from '../loading.js';
 import { resolvePushOut } from '../player/collision.js';
 import { toonMat, toonifyObject } from './toon.js';
+import { NAMED_BY_FLOOR, CROWD_LINES } from './dialogue.js';
 
 // Townsfolk that populate the spawn town (Floor 1) and the Royal Mile city (Floor 5).
 //
@@ -211,6 +212,7 @@ export class Villagers {
     this.getHeight = getHeight;
     this.colliders = colliders;
     this.people = [];
+    this.talkingWith = null; // set by main.js while a conversation is open
     const { n, region } = crowdSpec(biome);
     const pool = rosterPool(biome); // per-floor cast (indices into NPC_MODELS)
 
@@ -230,12 +232,43 @@ export class Villagers {
       });
     }
 
+    // named story NPCs for this floor: fixed posts, no strolling, real identities.
+    // modelIdx points at their chosen model so loadModels() upgrades them like anyone else.
+    for (const d of (NAMED_BY_FLOOR[biome.id] || [])) {
+      const modelIdx = MODEL_INDEX[d.model];
+      if (modelIdx === undefined) continue;
+      const g = makePerson(ARCHETYPES[NPC_MODELS[modelIdx].fb]);
+      g.position.set(d.pos.x, getHeight(d.pos.x, d.pos.z), d.pos.z);
+      g.rotation.y = Math.PI; // face -Z, toward the spawn plaza
+      scene.add(g);
+      this.people.push({
+        g, modelIdx, home: { x: d.pos.x, z: d.pos.z }, tx: d.pos.x, tz: d.pos.z,
+        wait: 0, speed: 0, static: true,
+        identity: { name: d.name, tag: d.tag, tree: { root: d.root, nodes: d.nodes } },
+        mixer: null, actions: null, current: null,
+      });
+    }
+
     if (NPC_MODELS.length) this.loadModels();
   }
 
   inCollider(x, z, pad) {
     for (const c of this.colliders) if (Math.hypot(x - c.x, z - c.z) < c.r + pad) return true;
     return false;
+  }
+
+  // closest person within `range` of `pos`, with an identity to talk to.
+  // named NPCs carry their own; everyone else gets a stable crowd one-liner.
+  nearestTalkable(pos, range) {
+    let best = null, bestIdx = -1, bestD = range;
+    this.people.forEach((p, i) => {
+      const d = Math.hypot(p.g.position.x - pos.x, p.g.position.z - pos.z);
+      if (d < bestD) { bestD = d; best = p; bestIdx = i; }
+    });
+    if (!best) return null;
+    const identity = best.identity
+      || { name: 'Villager', line: CROWD_LINES[bestIdx % CROWD_LINES.length] };
+    return { person: best, identity };
   }
 
   // load the real GLBs, then swap each fallback figure for a cloned + animated model
@@ -279,31 +312,44 @@ export class Villagers {
     else if (p.actions.walk) { p.actions.walk.play(); p.current = p.actions.walk; }
   }
 
-  // dt (real time) — ambient life ignores hit-stop, like the weather/camera
-  update(dt) {
+  // dt (real time) — ambient life ignores hit-stop, like the weather/camera.
+  // playerPos lets the person we're talking to turn and face the player.
+  update(dt, playerPos) {
     for (const p of this.people) {
       const g = p.g;
-      const dx = p.tx - g.position.x, dz = p.tz - g.position.z;
-      const d = Math.hypot(dx, dz);
       let moving = false;
-      if (d < 0.2) {
-        p.wait -= dt;
-        if (p.wait <= 0) { // pick a new stroll target near home
-          const a = Math.random() * Math.PI * 2, r = Math.random() * 5;
-          p.tx = p.home.x + Math.cos(a) * r;
-          p.tz = p.home.z + Math.sin(a) * r;
-          p.wait = 1.5 + Math.random() * 3;
+
+      if (p === this.talkingWith) {
+        // frozen in conversation: face the player, hold idle
+        if (playerPos) {
+          const ty = Math.atan2(playerPos.x - g.position.x, playerPos.z - g.position.z);
+          let d = ty - g.rotation.y;
+          d = Math.atan2(Math.sin(d), Math.cos(d));
+          g.rotation.y += d * Math.min(1, dt * 8);
         }
-      } else {
-        moving = true;
-        const step = Math.min(d, p.speed * dt);
-        g.position.x += (dx / d) * step;
-        g.position.z += (dz / d) * step;
-        const yaw = Math.atan2(dx, dz);
-        let diff = yaw - g.rotation.y;
-        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-        g.rotation.y += diff * Math.min(1, dt * 6);
+      } else if (!p.static) {
+        const dx = p.tx - g.position.x, dz = p.tz - g.position.z;
+        const d = Math.hypot(dx, dz);
+        if (d < 0.2) {
+          p.wait -= dt;
+          if (p.wait <= 0) { // pick a new stroll target near home
+            const a = Math.random() * Math.PI * 2, r = Math.random() * 5;
+            p.tx = p.home.x + Math.cos(a) * r;
+            p.tz = p.home.z + Math.sin(a) * r;
+            p.wait = 1.5 + Math.random() * 3;
+          }
+        } else {
+          moving = true;
+          const step = Math.min(d, p.speed * dt);
+          g.position.x += (dx / d) * step;
+          g.position.z += (dz / d) * step;
+          const yaw = Math.atan2(dx, dz);
+          let diff = yaw - g.rotation.y;
+          diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+          g.rotation.y += diff * Math.min(1, dt * 6);
+        }
       }
+
       // shared push-out keeps them out of buildings/trees
       const out = resolvePushOut(g.position.x, g.position.z, 0.3, this.colliders);
       g.position.set(out.x, this.getHeight(out.x, out.z), out.z);
