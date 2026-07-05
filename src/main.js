@@ -206,7 +206,7 @@ const hud = new HUD();
 hud.progression = progression; // addKill(xp) feeds XP through the existing kill funnel
 progression.hud = hud;         // ...and level-ups drive the XP bar / popup back
 const floor = createFloor(scene, biome);
-if (progression.isCleared(biome.id)) floor.openForward(); // re-visit a cleared floor → portal already open
+if (progression.isCleared(biome.id)) floor.openForward(false); // re-visit a cleared floor → portal already open, no flourish
 createTown(scene, terrainHeight, biome);
 const player = new Player(scene, camera, input, terrainHeight, colliders);
 player.hud = hud;

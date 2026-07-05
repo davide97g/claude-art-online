@@ -219,14 +219,15 @@ export function createFloor(scene, biome) {
 
   return {
     portals,
-    // Called on boss death (and on load for a cleared floor): activate the forward portal.
-    openForward() {
+    // Activate the forward portal. pulse=true (boss death) fires the expanding-ring
+    // flourish; pulse=false (already-cleared floor opening on load) stays quiet.
+    openForward(pulse = true) {
       const P = portals.find((p) => p.dir === 1);
       if (!P || P.active) return;
       P.active = true;
       P._bias = lastT * (0.4 - 1.6); // keep ring.rotation.z continuous across the speed jump
       setActiveLook(P._m);
-      P._pulse = lastT; // fire the activation pulse
+      if (pulse) P._pulse = lastT; // fire the activation flourish
     },
     update(t) {
       lastT = t;
