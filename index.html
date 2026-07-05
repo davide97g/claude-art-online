@@ -54,6 +54,16 @@
     #hud.cine #cine-top, #hud.cine #cine-bot { height: 11vh; }
     #hud.cine #hint { opacity: 0; }
     #boss-wrap { z-index: 6; } /* plate floats above the letterbox during the reveal */
+    /* --- NPC dialogue panel (SAO glass) --- */
+    #dialog { position: absolute; left: 50%; bottom: 40px; transform: translate(-50%, 12px); width: min(680px, 88vw); padding: 18px 22px 20px; border-radius: 12px; background: linear-gradient(135deg, rgba(8,12,20,0.9), rgba(8,12,20,0.62)); border: 1px solid rgba(127,212,255,0.22); border-left: 2px solid rgba(127,212,255,0.7); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); box-shadow: 0 10px 34px rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transition: opacity 0.32s ease, transform 0.32s ease; z-index: 7; }
+    #dialog.show { opacity: 1; transform: translate(-50%, 0); }
+    #dlg-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+    #dlg-name { font-size: 17px; font-weight: 700; letter-spacing: 0.1em; color: #eaf6ff; text-transform: uppercase; }
+    #dlg-tag { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #7fd4ff; opacity: 0.85; }
+    #dlg-text { font-size: 15px; line-height: 1.55; color: #dbe8f7; min-height: 46px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+    #dlg-choices { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+    .dlg-choice { padding: 8px 14px; border: 1px solid rgba(127,212,255,0.28); border-radius: 6px; color: #cfe6ff; font-size: 13px; letter-spacing: 0.04em; transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease; }
+    .dlg-choice.selected { border-color: #7fd4ff; background: rgba(127,212,255,0.16); color: #eaf6ff; transform: translateX(3px); box-shadow: 0 0 0 1px rgba(127,212,255,0.4); }
     /* --- loading screen --- */
     #lock-overlay { position: fixed; inset: 0; overflow: hidden; background: #0b0e14; color: #eaf2ff; z-index: 10; opacity: 1; transition: opacity 0.6s ease; }
     #lock-overlay.hidden { opacity: 0; pointer-events: none; }
@@ -116,6 +126,11 @@
     <div id="zoom-bar"><div id="zoom-fill"></div></div>
     <div id="hint">WASD move · Space jump · Shift sprint · Mouse look · Scroll zoom · Left-click attack · M mute · F fullscreen · Esc pause</div>
     <div id="place-badge"></div>
+    <div id="dialog">
+      <div id="dlg-head"><span id="dlg-name"></span><span id="dlg-tag"></span></div>
+      <div id="dlg-text"></div>
+      <div id="dlg-choices"></div>
+    </div>
     <div id="version"></div>
   </div>
   <div id="portal-fade"></div>
