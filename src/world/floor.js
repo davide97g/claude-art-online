@@ -61,6 +61,7 @@ export function terrainHeight(x, z) {
 }
 
 export const GATE_POS = new THREE.Vector3(0, 0, -120);
+export const BACK_POS = new THREE.Vector3(-7, 0, 8); // inside town.js blocked() clear zone (|x|<9 && z<14); ~10u from spawn so it's outside PORTAL_RADIUS at spawn
 
 export function createFloor(scene, biome) {
   configureTerrain(biome);
@@ -92,27 +93,54 @@ export function createFloor(scene, biome) {
   // so the map reads as a coherent low-poly world instead of procedural filler.
   const rng = () => Math.random() * 2 - 1; // kept: the sky floaters below still use it
 
-  // --- boss gate (sealed) ---
-  const gate = new THREE.Group();
-  const gy = terrainHeight(GATE_POS.x, GATE_POS.z);
-  const pillarGeo = new THREE.BoxGeometry(1.3, 8, 1.3);
-  const pillarMat = new THREE.MeshLambertMaterial({ color: 0x545c6e, flatShading: true });
-  const p1 = new THREE.Mesh(pillarGeo, pillarMat); p1.position.set(-3.2, 4, 0);
-  const p2 = new THREE.Mesh(pillarGeo, pillarMat); p2.position.set(3.2, 4, 0);
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(3, 0.22, 8, 40),
-    new THREE.MeshBasicMaterial({ color: 0x66d9ff })
-  );
-  ring.position.y = 4.4;
-  const portal = new THREE.Mesh(
-    new THREE.CircleGeometry(2.85, 40),
-    new THREE.MeshBasicMaterial({ color: 0x1a3d5c, transparent: true, opacity: 0.75, side: THREE.DoubleSide })
-  );
-  portal.position.y = 4.4;
-  gate.add(p1, p2, ring, portal);
-  gate.position.set(GATE_POS.x, gy, GATE_POS.z);
-  p1.castShadow = p2.castShadow = true;
-  scene.add(gate);
+  // --- portals: forward (+1) at the sealed gate, back (-1) near spawn ---
+  // Reusable builder: two pillars, a spinning ring, a translucent disc, and a
+  // hidden pulse ring that fires once on activation.
+  function makePortal(pos) {
+    const g = new THREE.Group();
+    const pillarGeo = new THREE.BoxGeometry(1.3, 8, 1.3);
+    const pillarMat = new THREE.MeshLambertMaterial({ color: 0x545c6e, flatShading: true });
+    const p1 = new THREE.Mesh(pillarGeo, pillarMat); p1.position.set(-3.2, 4, 0);
+    const p2 = new THREE.Mesh(pillarGeo, pillarMat); p2.position.set(3.2, 4, 0);
+    p1.castShadow = p2.castShadow = true;
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(3, 0.22, 8, 40),
+      new THREE.MeshBasicMaterial({ color: 0x66d9ff })
+    );
+    ring.position.y = 4.4;
+    const disc = new THREE.Mesh(
+      new THREE.CircleGeometry(2.85, 40),
+      new THREE.MeshBasicMaterial({ color: 0x1a3d5c, transparent: true, opacity: 0.75, side: THREE.DoubleSide })
+    );
+    disc.position.y = 4.4;
+    const pulse = new THREE.Mesh(
+      new THREE.TorusGeometry(3, 0.3, 8, 40),
+      new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0 })
+    );
+    pulse.position.y = 4.4; pulse.visible = false;
+    g.add(p1, p2, ring, disc, pulse);
+    g.position.set(pos.x, terrainHeight(pos.x, pos.z), pos.z);
+    scene.add(g);
+    return { ring, disc, pulse };
+  }
+
+  // gold ring + bright disc = the "open/active" look
+  function setActiveLook(mesh) {
+    mesh.ring.material.color.setHex(0xffd34d);
+    mesh.disc.material.color.setHex(0x9fd8ff);
+  }
+
+  const portals = [];
+  if (biome.id < 5) { // forward portal, sealed until the boss dies
+    const pos = new THREE.Vector3(GATE_POS.x, terrainHeight(GATE_POS.x, GATE_POS.z), GATE_POS.z);
+    portals.push({ dir: 1, targetLevel: biome.id + 1, pos, active: false, _bias: 0, _pulse: null, _m: makePortal(GATE_POS) });
+  }
+  if (biome.id > 1) { // back portal, always open (the way here is already cleared)
+    const pos = new THREE.Vector3(BACK_POS.x, terrainHeight(BACK_POS.x, BACK_POS.z), BACK_POS.z);
+    const m = makePortal(BACK_POS);
+    setActiveLook(m);
+    portals.push({ dir: -1, targetLevel: biome.id - 1, pos, active: true, _bias: 0, _pulse: null, _m: m });
+  }
 
   // --- sky: the floor above you + the distant tower core + floating rocks ---
   // (fog:false + pre-faded colors = cheap atmospheric distance)
@@ -186,24 +214,32 @@ export function createFloor(scene, biome) {
     scene.add(water);
   }
 
-  // gate-open state: boss death flips the colors and spins the ring up.
-  // spinBias keeps ring.rotation.z continuous across the speed change.
-  let gateOpen = false, spinBias = 0, lastT = 0;
+  // portal animation state; lastT lets openForward keep the ring spin continuous.
+  let lastT = 0;
 
   return {
-    gatePos: new THREE.Vector3(GATE_POS.x, gy, GATE_POS.z),
-    openGate() {
-      gateOpen = true;
-      spinBias = lastT * (0.4 - 1.6);
-      ring.material.color.setHex(0xffd34d);
-      portal.material.color.setHex(0x9fd8ff);
+    portals,
+    // Called on boss death (and on load for a cleared floor): activate the forward portal.
+    openForward() {
+      const P = portals.find((p) => p.dir === 1);
+      if (!P || P.active) return;
+      P.active = true;
+      P._bias = lastT * (0.4 - 1.6); // keep ring.rotation.z continuous across the speed jump
+      setActiveLook(P._m);
+      P._pulse = lastT; // fire the activation pulse
     },
     update(t) {
       lastT = t;
-      ring.rotation.z = gateOpen ? t * 1.6 + spinBias : t * 0.4;
-      portal.material.opacity = gateOpen
-        ? 0.75 + Math.sin(t * 3) * 0.15
-        : 0.65 + Math.sin(t * 1.6) * 0.1;
+      for (const P of portals) {
+        const m = P._m;
+        m.ring.rotation.z = P.active ? t * 1.6 + P._bias : t * 0.4;
+        m.disc.material.opacity = P.active ? 0.75 + Math.sin(t * 3) * 0.15 : 0.65 + Math.sin(t * 1.6) * 0.1;
+        if (P._pulse != null) { // expanding-ring activation flourish (~0.6s)
+          const e = t - P._pulse;
+          if (e < 0.6) { m.pulse.visible = true; m.pulse.scale.setScalar(1 + (e / 0.6) * 2); m.pulse.material.opacity = 0.8 * (1 - e / 0.6); }
+          else { m.pulse.visible = false; P._pulse = null; }
+        }
+      }
       for (const r of floaters) r.position.y = r.userData.baseY + Math.sin(t * 0.3 + r.userData.phase) * 2.5;
       if (water) water.material.map.offset.y = -t * 0.06;
     },

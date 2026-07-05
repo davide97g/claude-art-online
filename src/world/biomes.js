@@ -109,6 +109,7 @@ export const BIOMES = [
       { type: 'golem', x: 6, z: -64 }, { type: 'golem', x: -8, z: -90 },
       { type: 'golem', x: 22, z: -104 }, { type: 'golem', x: -24, z: -70 },
     ],
+    boss: { x: 0, z: -112 },
   },
 
   { // ---------- Floor 3: Storm Peaks ----------
@@ -163,6 +164,7 @@ export const BIOMES = [
       { type: 'golem', x: 22, z: -106 }, { type: 'golem', x: -26, z: -74 },
       { type: 'golem', x: 30, z: -50 },
     ],
+    boss: { x: 0, z: -112 },
   },
 
   { // ---------- Floor 4: The Elderwood (deep ancient forest) ----------
@@ -217,6 +219,7 @@ export const BIOMES = [
       { type: 'golem', x: 8, z: -68 }, { type: 'golem', x: -10, z: -92 },
       { type: 'golem', x: 22, z: -104 }, { type: 'golem', x: -24, z: -70 },
     ],
+    boss: { x: 0, z: -112 },
   },
 
   { // ---------- Floor 5: Craghold (Edinburgh-inspired medieval city) ----------
