@@ -8,13 +8,15 @@
     html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0e14; font-family: system-ui, sans-serif; }
     canvas { display: block; }
     #hud { position: fixed; inset: 0; pointer-events: none; color: #eaf2ff; }
-    #floor-label { position: absolute; top: 18px; left: 20px; font-size: 14px; letter-spacing: 0.12em; opacity: 0.85; text-transform: uppercase; }
-    #kills { position: absolute; top: 40px; left: 20px; font-size: 12px; opacity: 0.6; }
-    #hp-wrap { position: absolute; top: 66px; left: 20px; width: 220px; height: 10px; background: rgba(255,255,255,0.15); border-radius: 5px; }
-    #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #35e07f, #a8f05f); border-radius: 5px; }
+    /* top-left stat cluster sits on a soft blurred plate so it stays legible over bright skies */
+    #stat-panel { position: absolute; top: 12px; left: 12px; width: 246px; height: 116px; border-radius: 10px; background: linear-gradient(135deg, rgba(8,12,20,0.74), rgba(8,12,20,0.42)); border: 1px solid rgba(127,212,255,0.16); border-left: 2px solid rgba(127,212,255,0.6); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); box-shadow: 0 6px 22px rgba(0,0,0,0.4); opacity: 0; transform: translateX(-10px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    #stat-panel.live { opacity: 1; transform: translateX(0); }
+    #floor-label { position: absolute; top: 19px; left: 24px; font-size: 14px; letter-spacing: 0.12em; opacity: 1; font-weight: 600; text-transform: uppercase; text-shadow: 0 1px 6px rgba(0,0,0,0.75); }
+    #kills { position: absolute; top: 41px; left: 24px; font-size: 12px; opacity: 0.85; text-shadow: 0 1px 5px rgba(0,0,0,0.7); }
+    #hp-wrap { position: absolute; top: 66px; left: 24px; width: 216px; height: 10px; background: rgba(10,14,22,0.55); border: 1px solid rgba(255,255,255,0.12); border-radius: 5px; }
+    #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #35e07f, #a8f05f); border-radius: 5px; box-shadow: 0 0 8px rgba(53,224,127,0.45); }
     #hint { position: absolute; bottom: 24px; width: 100%; text-align: center; font-size: 13px; opacity: 0.65; }
     #gate-msg { position: absolute; top: 42%; width: 100%; text-align: center; font-size: 18px; letter-spacing: 0.2em; color: #9fd8ff; opacity: 0; transition: opacity 0.4s; text-transform: uppercase; }
-    #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: rgba(255,255,255,0.7); }
     #hit-flash { position: absolute; inset: 0; background: rgba(255, 32, 32, 0.55); opacity: 0; transition: opacity 0.3s; }
     #zoom-bar { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); width: 6px; height: 150px; background: rgba(255,255,255,0.14); border-radius: 3px; opacity: 0; transition: opacity 0.45s ease; }
     #zoom-bar.show { opacity: 0.85; }
@@ -26,13 +28,13 @@
     #version { position: absolute; bottom: 10px; left: 12px; font-size: 11px; letter-spacing: 0.08em; opacity: 0.4; }
     #place-badge.show { opacity: 0.95; transform: translateY(0); }
     /* --- XP / level (under the HP bar) --- */
-    #xp-wrap { position: absolute; top: 80px; left: 20px; width: 220px; height: 5px; background: rgba(255,255,255,0.15); border-radius: 3px; }
+    #xp-wrap { position: absolute; top: 80px; left: 24px; width: 216px; height: 5px; background: rgba(10,14,22,0.55); border-radius: 3px; }
     #xp { width: 0%; height: 100%; background: linear-gradient(90deg, #4aa8ff, #7fd4ff); border-radius: 3px; transition: width 0.2s ease; }
-    #lvl { position: absolute; top: 90px; left: 20px; font-size: 11px; letter-spacing: 0.12em; opacity: 0.7; text-transform: uppercase; }
+    #lvl { position: absolute; top: 90px; left: 24px; font-size: 11px; letter-spacing: 0.12em; opacity: 0.9; text-transform: uppercase; text-shadow: 0 1px 5px rgba(0,0,0,0.7); }
     #levelup { position: absolute; top: 30%; width: 100%; text-align: center; font-size: 26px; letter-spacing: 0.4em; text-transform: uppercase; color: #ffd34d; text-shadow: 0 2px 18px rgba(0,0,0,0.85); opacity: 0; transform: translateY(8px); transition: opacity 0.5s ease, transform 0.5s ease; }
     #levelup.show { opacity: 1; transform: translateY(0); }
     /* --- loot: Col counter (under Lv) + rare-drop toast --- */
-    #col { position: absolute; top: 104px; left: 20px; font-size: 12px; letter-spacing: 0.12em; color: #ffd34d; opacity: 0.75; }
+    #col { position: absolute; top: 104px; left: 24px; font-size: 12px; letter-spacing: 0.12em; color: #ffd34d; opacity: 0.9; text-shadow: 0 1px 5px rgba(0,0,0,0.7); }
     #col.pulse { animation: colpulse 0.4s ease; }
     @keyframes colpulse { 30% { transform: scale(1.2); opacity: 1; } }
     #loot-badge { position: absolute; top: 46%; width: 100%; text-align: center; font-size: 18px; letter-spacing: 0.3em; text-transform: uppercase; color: #ffd34d; text-shadow: 0 2px 18px rgba(0,0,0,0.85); opacity: 0; transform: translateY(8px); transition: opacity 0.5s ease, transform 0.5s ease; }
@@ -50,7 +52,7 @@
     #cine-top { top: 0; }
     #cine-bot { bottom: 0; }
     #hud.cine #cine-top, #hud.cine #cine-bot { height: 11vh; }
-    #hud.cine #crosshair, #hud.cine #hint { opacity: 0; }
+    #hud.cine #hint { opacity: 0; }
     #boss-wrap { z-index: 6; } /* plate floats above the letterbox during the reveal */
     /* --- loading screen --- */
     #lock-overlay { position: fixed; inset: 0; overflow: hidden; background: #0b0e14; color: #eaf2ff; z-index: 10; opacity: 1; transition: opacity 0.6s ease; }
@@ -82,13 +84,19 @@
     #floor-select .floor { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border: 1px solid rgba(127,212,255,0.35); border-radius: 4px; color: #cfe6ff; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; text-decoration: none; opacity: 0.7; transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease; }
     #floor-select .floor b { color: #7fd4ff; font-weight: 700; }
     #floor-select .floor:hover { opacity: 1; background: rgba(127,212,255,0.1); }
-    #floor-select .floor.current { opacity: 1; border-color: #7fd4ff; background: rgba(127,212,255,0.18); pointer-events: none; cursor: default; }
+    #floor-select .floor.current { opacity: 1; border-color: #7fd4ff; background: rgba(127,212,255,0.18); }
+    /* keyboard-driven highlight: the one floor arrows will confirm */
+    #floor-select .floor.selected { opacity: 1; border-color: #7fd4ff; color: #eaf6ff; background: rgba(127,212,255,0.22); box-shadow: 0 0 0 1px rgba(127,212,255,0.5), 0 0 16px rgba(127,212,255,0.4); transform: translateY(-1px); }
+    #nav-hint { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.55; }
+    #nav-hint kbd { display: inline-block; min-width: 16px; padding: 1px 5px; margin: 0 1px; border: 1px solid rgba(127,212,255,0.4); border-radius: 3px; color: #7fd4ff; font: inherit; font-size: 10px; }
+    @media (prefers-reduced-motion: reduce) { #lock-bg .kb.active, #lock-go.ready { animation: none; } }
   </style>
 </head>
 <body>
   <div id="hud">
     <div id="hit-flash"></div>
     <div id="death-msg">You died</div>
+    <div id="stat-panel"></div>
     <div id="floor-label">Floor 1 · Starting town outskirts</div>
     <div id="kills">kills: 0</div>
     <div id="hp-wrap"><div id="hp"></div></div>
@@ -102,9 +110,8 @@
     <div id="clear-banner"></div>
     <div id="cine-top"></div>
     <div id="cine-bot"></div>
-    <div id="crosshair"></div>
     <div id="zoom-bar"><div id="zoom-fill"></div></div>
-    <div id="hint">WASD move · Space jump · Shift sprint · Mouse look · Scroll to zoom · Left-click to attack · M mute · Esc to pause</div>
+    <div id="hint">WASD move · Space jump · Shift sprint · Mouse look · Scroll zoom · Left-click attack · M mute · F fullscreen · Esc pause</div>
     <div id="place-badge"></div>
     <div id="version"></div>
   </div>
@@ -138,6 +145,7 @@
         <a class="floor" data-level="11" href="?level=11"><b>XI</b> Tidewatch Abbey</a>
         <a class="floor" data-level="12" href="?level=12"><b>XII</b> Stillmere</a>
       </div>
+      <div id="nav-hint"><kbd>←</kbd><kbd>→</kbd> Choose floor · <kbd>Enter</kbd> Link start · <kbd>F</kbd> Fullscreen</div>
       <div id="lock-go">Link start</div>
     </div>
   </div>

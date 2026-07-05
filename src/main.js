@@ -98,16 +98,46 @@ const music = new Audio('/assets/audio/' + (FLOOR_TRACKS[biome.id] || 'bards_tal
 music.loop = true;
 music.volume = 0.35;
 
+// Fullscreen is opt-in (F), never forced — some players want the browser chrome kept.
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+
 // Entry is gated on load: clicks are ignored until `ready`.
-overlay.addEventListener('click', async () => {
+function enterGame() {
   if (!ready) return;
   music.play().catch(() => {}); // no-op if already playing / gesture didn't count
-  try { await document.documentElement.requestFullscreen(); } catch { /* fullscreen optional */ }
   renderer.domElement.requestPointerLock();
-});
+}
+overlay.addEventListener('click', enterGame);
+const statPanel = document.getElementById('stat-panel');
 document.addEventListener('pointerlockchange', () => {
   input.locked = document.pointerLockElement === renderer.domElement;
   overlay.classList.toggle('hidden', input.locked); // fade out on enter, back on Esc-pause
+  if (input.locked) statPanel.classList.add('live'); // stat plate slides in on first entry
+});
+
+// --- loading-screen keyboard nav: arrows pick a floor, Enter confirms, F toggles fullscreen ---
+const floorEls = [...document.querySelectorAll('#floor-select .floor')];
+let selIdx = Math.max(0, floorEls.findIndex((el) => parseInt(el.dataset.level, 10) === biome.id));
+function renderSelection() {
+  floorEls.forEach((el, i) => el.classList.toggle('selected', i === selIdx));
+  const lvl = parseInt(floorEls[selIdx].dataset.level, 10);
+  setPreview(lvl); // live-preview the highlighted floor
+}
+renderSelection();
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyF') { toggleFullscreen(); return; } // fullscreen toggles in menu and in-game
+  if (input.locked) return; // in-game keys handled below; menu nav only on the loading screen
+  if (e.code === 'ArrowRight' || e.code === 'ArrowDown') { selIdx = (selIdx + 1) % floorEls.length; renderSelection(); e.preventDefault(); }
+  else if (e.code === 'ArrowLeft' || e.code === 'ArrowUp') { selIdx = (selIdx - 1 + floorEls.length) % floorEls.length; renderSelection(); e.preventDefault(); }
+  else if (e.code === 'Enter' || e.code === 'Space') {
+    e.preventDefault();
+    const el = floorEls[selIdx];
+    if (el.classList.contains('current')) enterGame(); // already on this floor → start
+    else window.location.href = el.href;               // else load that floor's screen
+  }
 });
 
 // --- loading screen: progress bar, rotating tips, Ken Burns crossfade ---
