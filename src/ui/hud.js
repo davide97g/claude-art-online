@@ -108,9 +108,10 @@ export class HUD {
     this._clearT = setTimeout(() => { this.clearEl.style.opacity = 0; }, 4000);
   }
 
-  setGateOpen() {
-    this.gateEl.textContent = 'Gate open · floor cleared';
-    this.gateEl.style.color = '#ffd34d';
+  // Travel prompt on the gate-msg element: `text` shown+faded-in, null = hidden.
+  showPortalPrompt(text) {
+    if (text) { this.gateEl.textContent = text; this.gateEl.style.opacity = 1; }
+    else this.gateEl.style.opacity = 0;
   }
 
   setHP(r) {
@@ -124,10 +125,6 @@ export class HUD {
 
   showDeath(on) {
     this.deathEl.style.opacity = on ? 1 : 0;
-  }
-
-  setGateNear(near) {
-    this.gateEl.style.opacity = near ? 1 : 0;
   }
 
   setFloor(floorName, place0) {

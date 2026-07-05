@@ -55,6 +55,8 @@
     /* --- loading screen --- */
     #lock-overlay { position: fixed; inset: 0; overflow: hidden; background: #0b0e14; color: #eaf2ff; z-index: 10; opacity: 1; transition: opacity 0.6s ease; }
     #lock-overlay.hidden { opacity: 0; pointer-events: none; }
+    #portal-fade { position: fixed; inset: 0; z-index: 20; pointer-events: none; opacity: 0; transform: scale(0.2); background: radial-gradient(circle at 50% 45%, rgba(255,240,180,0.95), rgba(120,200,255,0.6) 40%, rgba(5,8,15,0.97) 100%); transition: opacity 1s ease, transform 1.1s ease; }
+    #portal-fade.go { opacity: 1; transform: scale(3); }
     /* Ken Burns image stack: layers fade in/out; the active one slowly zooms + drifts */
     #lock-bg { position: absolute; inset: 0; }
     #lock-bg .kb { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.4s ease; }
@@ -106,6 +108,7 @@
     <div id="place-badge"></div>
     <div id="version"></div>
   </div>
+  <div id="portal-fade"></div>
   <div id="lock-overlay">
     <!-- Ken Burns layers — background images are set per-floor by main.js (setPreview). -->
     <div id="lock-bg">
