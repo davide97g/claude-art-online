@@ -1,8 +1,25 @@
 import * as THREE from 'three';
+import type { Enemy, FlashMaterial, HeightFn } from './types.js';
 
 // Training dummy: takes hits, wobbles, dies, respawns. Our first "enemy".
-export class Dummy {
-  constructor(scene, x, z, getHeight, hud) {
+export class Dummy implements Enemy {
+  hud: any;
+  getHeight: HeightFn;
+  pos: THREE.Vector3;
+  alive: boolean;
+  maxHp: number;
+  hp: number;
+  wobble: number;
+  wobbleDir: THREE.Vector3;
+  respawnT: number;
+  flashT = 0;
+  group: THREE.Group;
+  body: THREE.Group;
+  flashMats: FlashMaterial[] = [];
+  barBg: THREE.Mesh;
+  barFg: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+
+  constructor(scene: THREE.Scene, x: number, z: number, getHeight: HeightFn, hud: any) {
     this.hud = hud;
     this.getHeight = getHeight;
     this.pos = new THREE.Vector3(x, getHeight(x, z), z);
@@ -29,10 +46,14 @@ export class Dummy {
     this.body = new THREE.Group();
     this.body.add(post, body, head, arms);
     this.group.add(this.body);
-    this.group.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    this.group.traverse((o) => { if (o instanceof THREE.Mesh) o.castShadow = true; });
 
-    this.flashMats = [];
-    this.body.traverse((o) => { if (o.isMesh) this.flashMats.push(o.material = o.material.clone()); });
+    this.body.traverse((o) => {
+      if (!(o instanceof THREE.Mesh)) return;
+      const m = (o.material as FlashMaterial).clone();
+      o.material = m;
+      this.flashMats.push(m);
+    });
 
     // 3D hp bar
     this.barBg = new THREE.Mesh(
@@ -48,7 +69,7 @@ export class Dummy {
     this.group.add(this.barBg, this.barFg);
   }
 
-  takeHit(dmg, dir) {
+  takeHit(dmg: number, dir: THREE.Vector3) {
     if (!this.alive) return;
     this.hp -= dmg;
     this.wobble = 1;
@@ -62,7 +83,7 @@ export class Dummy {
     }
   }
 
-  update(sdt, camera) {
+  update(sdt: number, camera: THREE.Camera) {
     if (this.flashT > 0) {
       this.flashT -= sdt;
       if (this.flashT <= 0) for (const m of this.flashMats) m.emissive = new THREE.Color(0x000000);

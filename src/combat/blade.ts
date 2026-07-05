@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { Enemy } from './types.js';
 
 // Click swordplay: left-click triggers a slash in the direction the player
 // faces, with a random variation (horizontal / diagonal / overhead) each time.
@@ -10,7 +11,23 @@ const RANGE = 2.9;
 const TRAIL_MAX = 24;
 
 export class Blade {
-  constructor(player, scene, world, hud, progression) {
+  player: any;
+  world: { hitStop(dur: number): void };
+  hud: any;
+  progression: any;
+  roll: THREE.Group;
+  sweep: THREE.Group;
+  sword: THREE.Group;
+  tipLocal: THREE.Vector3;
+  hiltLocal: THREE.Vector3;
+  swinging: boolean;
+  t: number;
+  didHit: boolean;
+  swipePower: number;
+  trailPts: THREE.Vector3[];
+  trail: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+
+  constructor(player: any, scene: THREE.Scene, world: { hitStop(dur: number): void }, hud: any, progression: any) {
     this.player = player;
     this.world = world;
     this.hud = hud;
@@ -72,7 +89,7 @@ export class Blade {
 
   }
 
-  update(sdt, dt, input, enemies, camera) {
+  update(sdt: number, dt: number, input: { attackQueued: boolean }, enemies: Enemy[], camera: THREE.Camera) {
     // once the knight model is in, its real sword takes over from the placeholder
     if (this.player.swordNode && this.sword.visible) this.sword.visible = false;
 
@@ -118,7 +135,7 @@ export class Blade {
     this.didHit = false;
     this.swipePower = 0.9 + Math.random() * 0.5; // slight damage variance per swing
     // random slash variation: horizontal / diagonal / overhead, mirrored at random
-    const kind = ['h', 'd', 'v'][Math.floor(Math.random() * 3)];
+    const kind = (['h', 'd', 'v'] as const)[Math.floor(Math.random() * 3)];
     const sign = Math.random() < 0.5 ? -1 : 1;
     this.roll.rotation.z = sign * { h: Math.PI / 2, d: Math.PI / 4, v: 0 }[kind];
     this.trailPts.length = 0;
@@ -126,7 +143,7 @@ export class Blade {
     this.player.attackT = 0.4; // face the camera direction while swinging
   }
 
-  resolveHit(enemies, camera) {
+  resolveHit(enemies: Enemy[], camera: THREE.Camera) {
     const pPos = this.player.pos;
     const fwd = this.player.forward();
     let hitSomething = false;
@@ -150,7 +167,7 @@ export class Blade {
   }
 
   recordTrail() {
-    let hilt, tip;
+    let hilt: THREE.Vector3, tip: THREE.Vector3;
     const node = this.player.swordNode;
     if (node) {
       // follow the knight's animated sword
@@ -168,7 +185,7 @@ export class Blade {
   }
 
   updateTrailGeometry() {
-    const attr = this.trail.geometry.attributes.position;
+    const attr = this.trail.geometry.attributes.position as THREE.BufferAttribute;
     const n = Math.min(this.trailPts.length, TRAIL_MAX * 2);
     for (let i = 0; i < n; i++) {
       const p = this.trailPts[i];

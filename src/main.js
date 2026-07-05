@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import pkg from '../package.json';
-import { Blade } from './combat/blade.js';
-import { Boar } from './combat/boar.js';
-import { KoboldLord } from './combat/boss.js';
-import { BossIntro } from './combat/cutscene.js';
-import { Dummy } from './combat/dummy.js';
-import { Golem } from './combat/golem.js';
+import { Blade } from './combat/blade';
+import { Boar } from './combat/boar';
+import { KoboldLord } from './combat/boss';
+import { BossIntro } from './combat/cutscene';
+import { Dummy } from './combat/dummy';
+import { Golem } from './combat/golem';
 import { manager } from './loading.js';
 import { Player } from './player/controller.js';
 import { Progression } from './progression.js';

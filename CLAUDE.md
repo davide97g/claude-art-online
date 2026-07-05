@@ -6,12 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Single-player 3D browser action game inspired by Sword Art Online's Aincrad. Read `VISION.md` for tone/art-direction/scope; it is the design contract. Core rule from it: **ship a rung of the scope ladder before climbing** — 3 floors, not 100; one satisfying enemy beats ten mediocre ones.
 
-## Two parallel implementations
+## Implementation
 
-- **`src/` — Three.js + Vite (vanilla JS, ES modules).** The primary, furthest-along version. This is what `package.json`/`index.html` run.
-- **`unity/` — Unity 6.x port.** Rung-1 gray-box (`Bootstrap.cs` builds the whole scene at runtime — no scene wiring, just press Play). See `unity/README.md`.
-
-They are independent codebases sharing the design, not shared code. When a task says "the game," assume the Three.js version unless Unity is named.
+**`src/` — Three.js + Vite (vanilla JS + TypeScript, ES modules).** This is what `package.json`/`index.html` run. (A Unity 6.x gray-box port lived in `unity/` earlier; it was dropped — the Three.js version is the game.)
 
 ## Commands
 
@@ -24,7 +21,7 @@ bun run build     # vite build → dist/
 bun run preview   # serve the built dist/
 ```
 
-No test runner, no linter. `bun run typecheck` (`tsc --noEmit`) is the one static check — Vite transpiles TS but does **not** typecheck, so run this yourself before claiming a change is sound. `tsconfig.json` has `allowJs: true` / `checkJs: false`: existing `.js` runs untouched, new `.ts` files get strict checking, migrate file-by-file. Verify runtime changes by loading the dev server and watching the browser console (all runtime logs are prefixed `[CAO]`). Unity has no CLI build here: open `unity/` in Unity Hub and press Play.
+No test runner, no linter. `bun run typecheck` (`tsc --noEmit`) is the one static check — Vite transpiles TS but does **not** typecheck, so run this yourself before claiming a change is sound. `tsconfig.json` has `allowJs: true` / `checkJs: false`: existing `.js` runs untouched, new `.ts` files get strict checking, migrate file-by-file. Verify runtime changes by loading the dev server and watching the browser console (all runtime logs are prefixed `[CAO]`). The `src/combat/` actors are TypeScript (`.ts`) and share the `Enemy` contract in `combat/types.ts`; the rest of `src/` is still `.js`, migrating file-by-file.
 
 ## Versioning — bump on every commit
 
@@ -44,7 +41,7 @@ The bump goes in the same commit as the work, so the on-screen version always ma
 - `dt` (real) drives things that must ignore hit-stop — camera easing, animation-mixer updates, cosmetic decays.
 Mixing these up silently breaks hit-stop or desyncs the camera. When adding an actor, mirror the existing `update(sdt, dt, ...)` signatures.
 
-**Enemy contract.** Every enemy (`combat/dummy.js`, `combat/golem.js`) exposes: `pos` (Vector3), `update(sdt, camera)`, and `takeHit(dmg, dir)`. `Blade.resolveHit` iterates the `enemies` array from `main.js` and calls `takeHit`; enemies that attack call `player.takeDamage(dmg, dir)` back. To add an enemy type, implement that shape and push it into the `enemies` array in `main.js`. Golem is the reference for stateful AI (idle→chase→windup→strike→recover→stagger, animated by rotating named model parts, not a skeleton).
+**Enemy contract.** Every enemy (`combat/dummy.ts`, `combat/golem.ts`) implements the `Enemy` interface in `combat/types.ts`: `pos` (Vector3), `alive` (boolean), `update(sdt, camera)`, and `takeHit(dmg, dir)`. `Blade.resolveHit` iterates the `enemies` array from `main.js` and calls `takeHit`; enemies that attack call `player.takeDamage(dmg, dir)` back. To add an enemy type, implement that shape and push it into the `enemies` array in `main.js`. Golem is the reference for stateful AI (idle→chase→windup→strike→recover→stagger, animated by rotating named model parts, not a skeleton).
 
 **Terrain is analytic, not raycast.** `world/floor.js` exports `terrainHeight(x, z)` — a pure function. The ground mesh, the player, every enemy, and every scattered prop all call it to sit on the ground. There is no physics/raycasting. If you change the height function, everything follows automatically; never hardcode Y positions for grounded things.
 
@@ -70,4 +67,4 @@ Code reaches into GLBs by **node name and material name**. Changing these in Ble
 
 ## Doc drift — code is the source of truth
 
-The Three.js combat has moved past what `README.md`/`VISION.md` describe. Those still say "RMB blade stance + mouse-swipe to slash" (Pointer Lock swipe gestures). The **actual `src/` combat is left-click slash** with a random swing variation and buffered clicks that chain into combos (`combat/blade.js`, `index.html` hint). The **Unity port kept** the RMB-swipe stance (`BladeStance.cs`). If you touch combat, trust the code over the prose, and update the docs in the same change.
+The Three.js combat has moved past what `README.md`/`VISION.md` describe. Those still say "RMB blade stance + mouse-swipe to slash" (Pointer Lock swipe gestures). The **actual `src/` combat is left-click slash** with a random swing variation and buffered clicks that chain into combos (`combat/blade.ts`, `index.html` hint). If you touch combat, trust the code over the prose, and update the docs in the same change.

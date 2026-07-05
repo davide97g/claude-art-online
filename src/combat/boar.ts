@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { Enemy, FlashMaterial, HeightFn } from './types.js';
 
 // Frenzy boar: weak roaming grind mob (the classic floor-1 boar). Wanders near
 // its home patch, charges the player on sight, gores on contact. Gray-box
@@ -8,8 +9,30 @@ const DEAGGRO = 15;   // give up beyond this range
 const LEASH = 18;     // never strays this far from home
 const GORE_RANGE = 1.4;
 
-export class Boar {
-  constructor(scene, x, z, getHeight, hud, player) {
+export class Boar implements Enemy {
+  hud: any;
+  player: any;
+  getHeight: HeightFn;
+  home: THREE.Vector3;
+  pos: THREE.Vector3;
+  alive: boolean;
+  maxHp: number;
+  hp: number;
+  wobble: number;
+  wobbleDir: THREE.Vector3;
+  flashT: number;
+  respawnT: number;
+  goreCd: number;
+  chasing: boolean;
+  heading: number;
+  headT: number;
+  group: THREE.Group;
+  body: THREE.Group;
+  flashMats: FlashMaterial[] = [];
+  barBg: THREE.Mesh;
+  barFg: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+
+  constructor(scene: THREE.Scene, x: number, z: number, getHeight: HeightFn, hud: any, player: any) {
     this.hud = hud;
     this.player = player;
     this.getHeight = getHeight;
@@ -52,10 +75,14 @@ export class Boar {
       this.body.add(leg);
     }
     this.group.add(this.body);
-    this.group.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    this.group.traverse((o) => { if (o instanceof THREE.Mesh) o.castShadow = true; });
 
-    this.flashMats = [];
-    this.body.traverse((o) => { if (o.isMesh) this.flashMats.push(o.material = o.material.clone()); });
+    this.body.traverse((o) => {
+      if (!(o instanceof THREE.Mesh)) return;
+      const m = (o.material as FlashMaterial).clone();
+      o.material = m;
+      this.flashMats.push(m);
+    });
 
     // world-space hp bar (dummy pattern, lower + narrower)
     this.barBg = new THREE.Mesh(
@@ -73,7 +100,7 @@ export class Boar {
     this.group.add(this.barBg, this.barFg);
   }
 
-  takeHit(dmg, dir) {
+  takeHit(dmg: number, dir: THREE.Vector3) {
     if (!this.alive) return;
     this.hp -= dmg;
     this.wobble = 1;
@@ -88,7 +115,7 @@ export class Boar {
     }
   }
 
-  update(sdt, camera) {
+  update(sdt: number, camera: THREE.Camera) {
     if (this.flashT > 0) {
       this.flashT -= sdt;
       if (this.flashT <= 0) for (const m of this.flashMats) m.emissive.setHex(0x000000);

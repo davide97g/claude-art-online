@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import { gltf } from '../loading.js';
+import type { Enemy, FlashMaterial, HeightFn } from './types.js';
 
 // Moss Golem: first real enemy. No skeleton — animated in code by moving
 // its named parts (Body, ArmL/R, eyes). States: idle -> chase -> windup
 // (telegraph: eyes flare, arms raise) -> strike (lunge + slam) -> recover.
 
-let proto = null;
-let protoLoad = null;
+let proto: THREE.Group | null = null;
+let protoLoad: Promise<void> | null = null;
 function loadProto() {
   if (!protoLoad) {
     protoLoad = new Promise((resolve) => {
@@ -23,8 +24,36 @@ function loadProto() {
 
 const AGGRO = 13, DEAGGRO = 20, REACH = 2.1, HIT_RANGE = 2.6;
 
-export class Golem {
-  constructor(scene, x, z, getHeight, hud, player, world, tint = null) {
+export class Golem implements Enemy {
+  getHeight: HeightFn;
+  hud: any;
+  player: any;
+  world: any;
+  tint: THREE.ColorRepresentation | null;
+  home: THREE.Vector3;
+  pos: THREE.Vector3;
+  alive: boolean;
+  maxHp: number;
+  hp: number;
+  state: string;
+  t: number;
+  struck: boolean;
+  wobble: number;
+  wobbleDir: THREE.Vector3;
+  flashT: number;
+  respawnT: number;
+  bobPhase: number;
+  group: THREE.Group;
+  eyeMats: FlashMaterial[] = [];
+  flashMats: FlashMaterial[] = [];
+  fallback: THREE.Mesh | null;
+  barBg: THREE.Mesh;
+  barFg: THREE.Mesh;
+  model?: THREE.Object3D;
+  armL?: THREE.Object3D | null;
+  armR?: THREE.Object3D | null;
+
+  constructor(scene: THREE.Scene, x: number, z: number, getHeight: HeightFn, hud: any, player: any, world: any, tint: THREE.ColorRepresentation | null = null) {
     this.getHeight = getHeight;
     this.hud = hud;
     this.player = player;
@@ -72,15 +101,17 @@ export class Golem {
   }
 
   useModel() {
+    if (!proto) return;
     if (this.fallback) { this.group.remove(this.fallback); this.fallback = null; }
     const model = proto.clone(true);
     model.traverse((o) => {
-      if (!o.isMesh) return;
+      if (!(o instanceof THREE.Mesh)) return;
       o.castShadow = true;
-      o.material = o.material.clone(); // per-instance mats: eye flare + hit flash
-      if (this.tint != null) o.material.color.multiply(new THREE.Color(this.tint));
-      this.flashMats.push(o.material);
-      if (o.material.name === 'CAO_GolemEye') this.eyeMats.push(o.material);
+      const m = (o.material as FlashMaterial).clone(); // per-instance mats: eye flare + hit flash
+      o.material = m;
+      if (this.tint != null) m.color.multiply(new THREE.Color(this.tint));
+      this.flashMats.push(m);
+      if (m.name === 'CAO_GolemEye') this.eyeMats.push(m);
     });
     this.model = model;
     this.armL = model.getObjectByName('ArmL');
@@ -88,11 +119,11 @@ export class Golem {
     this.group.add(model);
   }
 
-  setEyes(intensity) {
+  setEyes(intensity: number) {
     for (const m of this.eyeMats) m.emissiveIntensity = intensity;
   }
 
-  takeHit(dmg, dir) {
+  takeHit(dmg: number, dir: THREE.Vector3) {
     if (!this.alive) return;
     this.hp -= dmg;
     this.wobble = 1;
@@ -107,7 +138,7 @@ export class Golem {
     }
   }
 
-  update(sdt, camera) {
+  update(sdt: number, camera: THREE.Camera) {
     if (this.flashT > 0) {
       this.flashT -= sdt;
       if (this.flashT <= 0) {
@@ -136,7 +167,7 @@ export class Golem {
     const dist = toP.length();
     if (dist > 0.001) toP.normalize();
 
-    const armPose = (raise) => {
+    const armPose = (raise: number) => {
       if (this.armL) this.armL.rotation.x = raise;
       if (this.armR) this.armR.rotation.x = raise;
     };

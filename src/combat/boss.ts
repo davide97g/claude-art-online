@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { gltf } from '../loading.js';
+import type { Enemy, FlashMaterial, HeightFn } from './types.js';
 
 // Rendfang the Kobold Lord — Floor-1 boss guarding the sealed gate.
 // Same no-skeleton approach as the golem: named GLB parts posed in code
@@ -8,8 +9,8 @@ import { gltf } from '../loading.js';
 // Phase 2 (≤40% hp): drops axe+buckler, draws the nodachi, faster 3-hit combos.
 // Dies for good within a session (no respawn); reload to refight.
 
-let proto = null;
-let protoLoad = null;
+let proto: THREE.Group | null = null;
+let protoLoad: Promise<void> | null = null;
 function loadProto() {
   if (!protoLoad) {
     protoLoad = new Promise((resolve) => {
@@ -29,8 +30,48 @@ const WAKE = 16, LEASH = 34, MELEE = 3.4;
 const ENRAGE_EMISSIVE = 0x3a0a08;
 const EYE_BASE = new THREE.Color(1.0, 0.35, 0.1);
 
-export class KoboldLord {
-  constructor(scene, x, z, getHeight, hud, player, world) {
+export class KoboldLord implements Enemy {
+  getHeight: HeightFn;
+  hud: any;
+  player: any;
+  world: any;
+  home: THREE.Vector3;
+  pos: THREE.Vector3;
+  alive: boolean;
+  maxHp: number;
+  hp: number;
+  state: string;
+  t: number;
+  stateDur: number;
+  struck: boolean;
+  enraged: boolean;
+  comboStep: number;
+  chargeCd: number;
+  chargeDir: THREE.Vector3;
+  name: string;
+  onDeath: (() => void) | null;
+  onWake: (() => boolean) | null;
+  wobble: number;
+  wobbleDir: THREE.Vector3;
+  flashT: number;
+  lean: number;
+  bobPhase: number;
+  group: THREE.Group;
+  eyeMats: FlashMaterial[] = [];
+  flashMats: FlashMaterial[] = [];
+  fallback: THREE.Mesh | null;
+  ring: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
+  model?: THREE.Object3D;
+  armL?: THREE.Object3D;
+  armR?: THREE.Object3D;
+  head?: THREE.Object3D;
+  tail?: THREE.Object3D;
+  weaponAxe?: THREE.Object3D;
+  buckler?: THREE.Object3D;
+  nodachi?: THREE.Object3D;
+  nodachiBack?: THREE.Object3D;
+
+  constructor(scene: THREE.Scene, x: number, z: number, getHeight: HeightFn, hud: any, player: any, world: any) {
     this.getHeight = getHeight;
     this.hud = hud;
     this.player = player;
@@ -85,14 +126,16 @@ export class KoboldLord {
   }
 
   useModel() {
+    if (!proto) return;
     if (this.fallback) { this.group.remove(this.fallback); this.fallback = null; }
     const model = proto.clone(true);
     model.traverse((o) => {
-      if (!o.isMesh) return;
+      if (!(o instanceof THREE.Mesh)) return;
       o.castShadow = true;
-      o.material = o.material.clone(); // per-instance mats: eye flare + hit flash
-      this.flashMats.push(o.material);
-      if (o.material.name === 'CAO_BossEye') this.eyeMats.push(o.material);
+      const m = (o.material as FlashMaterial).clone(); // per-instance mats: eye flare + hit flash
+      o.material = m;
+      this.flashMats.push(m);
+      if (m.name === 'CAO_BossEye') this.eyeMats.push(m);
     });
     this.model = model;
     this.armL = model.getObjectByName('ArmL');
@@ -108,7 +151,7 @@ export class KoboldLord {
     if (this.enraged) this.applyEnrage(); // GLB can arrive mid-fight
   }
 
-  setEyes(intensity) {
+  setEyes(intensity: number) {
     for (const m of this.eyeMats) m.emissiveIntensity = intensity;
   }
 
@@ -133,14 +176,14 @@ export class KoboldLord {
     }
   }
 
-  enter(state, dur = 0) {
+  enter(state: string, dur = 0) {
     this.state = state;
     this.t = dur;
     this.stateDur = dur;
     this.struck = false;
   }
 
-  hitPlayer(base, spread, dir, stop = 0) {
+  hitPlayer(base: number, spread: number, dir: THREE.Vector3, stop = 0) {
     if (this.player.dead) return;
     this.player.takeDamage(Math.round(base + Math.random() * spread), dir);
     if (stop) this.world.hitStop(stop);
@@ -152,7 +195,7 @@ export class KoboldLord {
     this.hud.showBoss(NAME);
   }
 
-  takeHit(dmg, dir) {
+  takeHit(dmg: number, dir: THREE.Vector3) {
     if (!this.alive) return;
     if (this.state === 'dormant' || this.state === 'return') this.wake();
     this.hp -= dmg;
@@ -179,7 +222,7 @@ export class KoboldLord {
     this.enter('return');
   }
 
-  update(sdt) {
+  update(sdt: number) {
     if (this.flashT > 0) {
       this.flashT -= sdt;
       if (this.flashT <= 0) {

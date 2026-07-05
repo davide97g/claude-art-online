@@ -9,17 +9,17 @@ import * as THREE from 'three';
 
 const SCENE_LEN = 3.5, OUTRO_LEN = 0.8;
 
-function smooth(k) {
+function smooth(k: number) {
   k = Math.min(1, Math.max(0, k));
   return k * k * (3 - 2 * k);
 }
 
 // ponytail: synthesized WebAudio growl — swap for a real roar mp3 when one
 // lands in public/assets/audio/ (SOUNDTRACK.md boss cues).
-let audioCtx = null;
+let audioCtx: AudioContext | null = null;
 function playRoar() {
   try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx = audioCtx || new (window.AudioContext || (window as any).webkitAudioContext)();
     const t0 = audioCtx.currentTime;
     const g = audioCtx.createGain();
     g.gain.setValueAtTime(0.0001, t0);
@@ -29,7 +29,7 @@ function playRoar() {
     f.type = 'lowpass';
     f.frequency.setValueAtTime(700, t0);
     f.frequency.exponentialRampToValueAtTime(160, t0 + 1.2);
-    for (const [type, hz0, hz1] of [['sawtooth', 92, 36], ['square', 47, 29]]) {
+    for (const [type, hz0, hz1] of [['sawtooth', 92, 36], ['square', 47, 29]] as const) {
       const o = audioCtx.createOscillator();
       o.type = type;
       o.frequency.setValueAtTime(hz0, t0);
@@ -42,7 +42,19 @@ function playRoar() {
 }
 
 export class BossIntro {
-  constructor(camera, player, boss, hud) {
+  camera: THREE.Camera;
+  player: any;
+  boss: any;
+  hud: any;
+  phase: string;
+  played: boolean;
+  t: number;
+  roared: boolean;
+  plated: boolean;
+  endPos: THREE.Vector3;
+  endQuat: THREE.Quaternion;
+
+  constructor(camera: THREE.Camera, player: any, boss: any, hud: any) {
     this.camera = camera;
     this.player = player;
     this.boss = boss;
@@ -71,7 +83,7 @@ export class BossIntro {
     return true;
   }
 
-  update(dt) {
+  update(dt: number) {
     if (this.phase !== 'scene') return;
     this.t += dt;
     const boss = this.boss, player = this.player;
@@ -125,7 +137,7 @@ export class BossIntro {
   }
 
   // called after player.update wrote the orbit camera — blends scene -> player
-  postCamera(dt) {
+  postCamera(dt: number) {
     if (this.phase !== 'outro') return;
     this.t += dt;
     const k = smooth(this.t / OUTRO_LEN);
