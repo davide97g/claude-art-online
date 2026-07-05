@@ -61,7 +61,7 @@ export function terrainHeight(x, z) {
 }
 
 export const GATE_POS = new THREE.Vector3(0, 0, -120);
-export const BACK_POS = new THREE.Vector3(-12, 0, 6); // spawn-plaza (always clear), offset from gate corridor
+export const BACK_POS = new THREE.Vector3(-7, 0, 8); // inside town.js blocked() clear zone (|x|<9 && z<14); ~10u from spawn so it's outside PORTAL_RADIUS at spawn
 
 export function createFloor(scene, biome) {
   configureTerrain(biome);

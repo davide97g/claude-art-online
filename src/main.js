@@ -188,7 +188,7 @@ const PORTAL_RADIUS = 6;
 const TRANS_DUR = 1.1;
 const fadeEl = document.getElementById('portal-fade');
 const camStart = new THREE.Vector3();
-let transitioning = false, transT = 0, transPortal = null, transTarget = 0;
+let transitioning = false, transT = 0, transPortal = null, transTarget = 0, navigated = false;
 function startTransition(P) {
   transitioning = true; transT = 0; transPortal = P; transTarget = P.targetLevel;
   camStart.copy(camera.position);
@@ -283,7 +283,7 @@ function tick() {
     floor.update(elapsed);
     weather.update(dt, player.pos);
     renderer.render(scene, camera);
-    if (k >= 1) location.assign('?level=' + transTarget);
+    if (k >= 1 && !navigated) { navigated = true; location.assign('?level=' + transTarget); }
     return; // raf already scheduled at top of tick
   }
 
