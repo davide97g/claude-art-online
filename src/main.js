@@ -27,6 +27,10 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// cozy grade: gentle highlight roll-off so toon bands read soft, not blown out.
+// Neutral keeps hue/saturation (unlike AgX/ACES), preserving each floor's palette.
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.08;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
@@ -45,6 +49,9 @@ sun.shadow.camera.left = -60; sun.shadow.camera.right = 60;
 sun.shadow.camera.top = 60; sun.shadow.camera.bottom = -60;
 sun.shadow.camera.far = 300;
 scene.add(sun);
+// warm fill so toon shadow bands stay soft & cozy instead of muddy; uniform lift
+// keeps each biome's mood intact (dark floors stay darker, just less harsh).
+scene.add(new THREE.AmbientLight(0xfff4e6, 0.18));
 
 // --- input (pointer lock; per-frame mouse deltas) ---
 const input = { keys: {}, dx: 0, dy: 0, attackQueued: false, interact: false, locked: false };

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { gltf } from '../loading.js';
+import { toonMat, toonify } from '../world/toon.js';
 import type { Enemy, FlashMaterial, HeightFn } from './types.js';
 
 // Moss Golem: first real enemy. No skeleton — animated in code by moving
@@ -81,7 +82,7 @@ export class Golem implements Enemy {
     this.flashMats = [];
     this.fallback = new THREE.Mesh(
       new THREE.IcosahedronGeometry(0.55, 1),
-      new THREE.MeshLambertMaterial({ color: 0x24242c, flatShading: true })
+      toonMat({ color: 0x24242c, flatShading: true })
     );
     this.fallback.position.y = 0.85;
     this.group.add(this.fallback);
@@ -107,7 +108,7 @@ export class Golem implements Enemy {
     model.traverse((o) => {
       if (!(o instanceof THREE.Mesh)) return;
       o.castShadow = true;
-      const m = (o.material as FlashMaterial).clone(); // per-instance mats: eye flare + hit flash
+      const m = toonify(o.material) as FlashMaterial; // per-instance mats: eye flare + hit flash
       o.material = m;
       if (this.tint != null) m.color.multiply(new THREE.Color(this.tint));
       this.flashMats.push(m);

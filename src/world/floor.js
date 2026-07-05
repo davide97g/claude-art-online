@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { toonMat } from './toon.js';
 
 function smoothstep(a, b, x) {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -84,7 +85,7 @@ export function createFloor(scene, biome) {
   geo.computeVertexNormals();
   const ground = new THREE.Mesh(
     geo,
-    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })
+    toonMat({ vertexColors: true, flatShading: true })
   );
   ground.receiveShadow = true;
   scene.add(ground);
@@ -99,7 +100,7 @@ export function createFloor(scene, biome) {
   function makePortal(pos) {
     const g = new THREE.Group();
     const pillarGeo = new THREE.BoxGeometry(1.3, 8, 1.3);
-    const pillarMat = new THREE.MeshLambertMaterial({ color: 0x545c6e, flatShading: true });
+    const pillarMat = toonMat({ color: 0x545c6e, flatShading: true });
     const p1 = new THREE.Mesh(pillarGeo, pillarMat); p1.position.set(-3.2, 4, 0);
     const p2 = new THREE.Mesh(pillarGeo, pillarMat); p2.position.set(3.2, 4, 0);
     p1.castShadow = p2.castShadow = true;

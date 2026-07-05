@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { gltf } from '../loading.js';
+import { toonMat, toonify } from '../world/toon.js';
 import type { Enemy, FlashMaterial, HeightFn } from './types.js';
 
 // Rendfang the Kobold Lord — Floor-1 boss guarding the sealed gate.
@@ -107,7 +108,7 @@ export class KoboldLord implements Enemy {
     this.flashMats = [];
     this.fallback = new THREE.Mesh(
       new THREE.IcosahedronGeometry(1.0, 1),
-      new THREE.MeshLambertMaterial({ color: 0x7a2420, flatShading: true })
+      toonMat({ color: 0x7a2420, flatShading: true })
     );
     this.fallback.scale.set(1.3, 1.7, 1.3);
     this.fallback.position.y = 1.7;
@@ -132,7 +133,7 @@ export class KoboldLord implements Enemy {
     model.traverse((o) => {
       if (!(o instanceof THREE.Mesh)) return;
       o.castShadow = true;
-      const m = (o.material as FlashMaterial).clone(); // per-instance mats: eye flare + hit flash
+      const m = toonify(o.material) as FlashMaterial; // per-instance mats: eye flare + hit flash
       o.material = m;
       this.flashMats.push(m);
       if (m.name === 'CAO_BossEye') this.eyeMats.push(m);

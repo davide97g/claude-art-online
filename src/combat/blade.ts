@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { toonMat } from '../world/toon.js';
 import type { Enemy } from './types.js';
 
 // Click swordplay: left-click triggers a slash in the direction the player
@@ -44,17 +45,17 @@ export class Blade {
     const sword = new THREE.Group();
     const blade = new THREE.Mesh(
       new THREE.BoxGeometry(0.06, 1.05, 0.16),
-      new THREE.MeshLambertMaterial({ color: 0xd8e4f0, emissive: 0x223244, flatShading: true })
+      toonMat({ color: 0xd8e4f0, emissive: 0x223244, flatShading: true })
     );
     blade.position.y = 0.85;
     const guard = new THREE.Mesh(
       new THREE.BoxGeometry(0.3, 0.06, 0.1),
-      new THREE.MeshLambertMaterial({ color: 0x2b2f3a })
+      toonMat({ color: 0x2b2f3a })
     );
     guard.position.y = 0.3;
     const grip = new THREE.Mesh(
       new THREE.CylinderGeometry(0.035, 0.035, 0.26, 6),
-      new THREE.MeshLambertMaterial({ color: 0x5a4632 })
+      toonMat({ color: 0x5a4632 })
     );
     grip.position.y = 0.16;
     sword.add(blade, guard, grip);

@@ -19,7 +19,10 @@ Reference: Echoes of Aincrad (Steam, Bandai Namco 2026) for *mood* —
 vibrant anime fantasy, serene plains, floating castle vistas — but NOT for
 fidelity. We can't match a AAA pipeline and shouldn't try.
 
-Our art direction: **low-poly stylized, flat-shaded, strong silhouettes.**
+Our art direction: **low-poly stylized, cel-shaded, cozy, strong silhouettes.**
+Chunky flat-shaded geometry rendered with banded toon shading (a soft
+Pokopia / Animal Crossing warmth) — storybook, never realistic. All materials
+run through `src/world/toon.js` (`toonMat` for gray-box, `toonify` for GLBs).
 
 - Palette per floor: Floor 1 = warm greens/gold (Town of Beginnings vibe),
   saturated sky, soft fog hiding the floor's edge. Floor 2 = pale frost-blue

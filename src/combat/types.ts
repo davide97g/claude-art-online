@@ -13,7 +13,7 @@ export interface Enemy {
 // A material we flash/tint by name — all of these expose emissive/color.
 // ponytail: loose union covering Lambert (gray-box) + Standard (GLB clones);
 // widen if a new material type joins the flash set.
-export type FlashMaterial = THREE.MeshStandardMaterial | THREE.MeshLambertMaterial;
+export type FlashMaterial = THREE.MeshStandardMaterial | THREE.MeshLambertMaterial | THREE.MeshToonMaterial;
 
 // Analytic ground height, from world/floor.js (still untyped .js).
 export type HeightFn = (x: number, z: number) => number;

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { toonMat } from '../world/toon.js';
 import type { Enemy, FlashMaterial, HeightFn } from './types.js';
 
 // Frenzy boar: weak roaming grind mob (the classic floor-1 boar). Wanders near
@@ -55,8 +56,8 @@ export class Boar implements Enemy {
     this.group.rotation.y = this.heading;
     scene.add(this.group);
 
-    const hide = new THREE.MeshLambertMaterial({ color: 0x6e5a48, flatShading: true });
-    const bone = new THREE.MeshLambertMaterial({ color: 0xe8dfc8, flatShading: true });
+    const hide = toonMat({ color: 0x6e5a48, flatShading: true });
+    const bone = toonMat({ color: 0xe8dfc8, flatShading: true });
     this.body = new THREE.Group();
     const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.55, 1.2), hide);
     trunk.position.y = 0.55;

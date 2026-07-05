@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { gltf } from '../loading.js';
 import { resolvePushOut } from '../player/collision.js';
+import { toonMat, toonifyObject } from './toon.js';
 
 // Townsfolk that populate the spawn town (Floor 1) and the Royal Mile city (Floor 5).
 //
@@ -58,7 +59,7 @@ const PLAZA = new THREE.Vector2(0, 22); // spawn-town center (matches town.js CE
 // ---------- fallback archetypes: real variety from primitives ----------
 const SKIN = { light: 0xf0c8a0, tan: 0xe0b088, olive: 0xc98a5b, brown: 0x8a5a3a };
 const HAIR = { black: 0x2b2320, brown: 0x5a3a22, blonde: 0xc9a25a, gray: 0xb9b6ae, red: 0x8a4a2a };
-const mat = (c) => new THREE.MeshLambertMaterial({ color: c, flatShading: true });
+const mat = (c) => toonMat({ color: c, flatShading: true });
 
 // build:{topR,botR,h}  hair:{color,style}  hat:{type,color}  cape/beard/belt flags  scale
 const ARCHETYPES = [
@@ -243,6 +244,7 @@ export class Villagers {
     NPC_MODELS.forEach((m, i) => gltf.load(m.file,
       (g) => {
         g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; } });
+        toonifyObject(g.scene); // cel-shade townsfolk to match the world
         loaded[i] = g;
         // upgrade every person assigned to this model
         for (const p of this.people) {

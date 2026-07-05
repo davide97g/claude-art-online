@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { toonMat } from '../world/toon.js';
 import type { Enemy, FlashMaterial, HeightFn } from './types.js';
 
 // Training dummy: takes hits, wobbles, dies, respawns. Our first "enemy".
@@ -34,7 +35,7 @@ export class Dummy implements Enemy {
     this.group.position.copy(this.pos);
     scene.add(this.group);
 
-    const wood = new THREE.MeshLambertMaterial({ color: 0xa9825a, flatShading: true });
+    const wood = toonMat({ color: 0xa9825a, flatShading: true });
     const post = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 1.1, 6), wood);
     post.position.y = 0.55;
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 1.0, 7), wood);

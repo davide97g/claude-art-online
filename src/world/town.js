@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { gltf as loader } from '../loading.js';
 import { GATE_POS } from './floor.js';
 import { cityLayout } from './citylayout.js';
+import { toonifyObject } from './toon.js';
 
 // Populates Floor 1 with KayKit Medieval Hexagon Pack models (CC0, Kay Lousberg —
 // same artist as the knight, so silhouettes stay coherent). Everything loads
@@ -58,6 +59,7 @@ function proto(path, base = BASE, ext = 'gltf') {
       loader.load(key,
         (g) => {
           g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+          toonifyObject(g.scene); // cel-shade KayKit/Kenney assets to match the world
           resolve(g.scene);
         },
         undefined,
@@ -70,7 +72,18 @@ function proto(path, base = BASE, ext = 'gltf') {
 const bp = (type, color) => `buildings/${color}/building_${type}_${color}`;
 
 const _v = new THREE.Vector3();
-async function place(parent, path, x, z, getHeight, { yaw = 0, scale = SCALE, sink = 0.15 } = {}) {
+// Lowest ground height under a model's footprint (its 4 world-AABB base corners
+// + center). Rigid buildings sit on this so the downhill side never floats on a
+// slope — the uphill side just nestles into the hill, which reads as cozy.
+function groundMin(m, x, z, getHeight) {
+  _box.setFromObject(m);
+  _box.getSize(_size);
+  const hx = _size.x * 0.5, hz = _size.z * 0.5;
+  let gy = getHeight(x, z);
+  for (const dx of [-hx, hx]) for (const dz of [-hz, hz]) gy = Math.min(gy, getHeight(x + dx, z + dz));
+  return gy;
+}
+async function place(parent, path, x, z, getHeight, { yaw = 0, scale = SCALE, sink = 0.15, level = false } = {}) {
   const s = await proto(path);
   if (!s) return null;
   const m = s.clone(true);
@@ -78,6 +91,7 @@ async function place(parent, path, x, z, getHeight, { yaw = 0, scale = SCALE, si
   m.rotation.y = yaw;
   m.scale.setScalar(scale);
   parent.add(m);
+  if (level) { m.updateMatrixWorld(true); m.position.y = groundMin(m, x, z, getHeight) - sink; }
   return m;
 }
 
@@ -211,7 +225,7 @@ export function createTown(scene, getHeight, biome) {
   // --- settlement: hand-placed buildings, faced toward the cluster center ---
   for (const [type, color, x, z] of biome.settlement) {
     colliders.push({ x, z, r: BUILDING_R });
-    place(root, bp(type, color), x, z, getHeight, { yaw: facePlaza(x, z) })
+    place(root, bp(type, color), x, z, getHeight, { yaw: facePlaza(x, z), level: true })
       .then((m) => { if (m) tintObject(m, tint); });
   }
 
@@ -220,7 +234,7 @@ export function createTown(scene, getHeight, biome) {
     for (const b of cityLayout(biome.city, rng)) {
       colliders.push({ x: b.x, z: b.z, r: b.castle ? CASTLE_R : BUILDING_R });
       place(root, bp(b.type, b.color), b.x, b.z, getHeight,
-        { yaw: b.yaw, sink: b.castle ? 0.6 : 0.15, scale: b.castle ? SCALE * 1.6 : SCALE })
+        { yaw: b.yaw, sink: b.castle ? 0.6 : 0.15, scale: b.castle ? SCALE * 1.6 : SCALE, level: true })
         .then((m) => { if (m) tintObject(m, tint); });
     }
   }

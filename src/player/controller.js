@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { gltf } from '../loading.js';
 import { resolvePushOut } from './collision.js';
+import { toonMat, toonifyObject } from '../world/toon.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
 const GRAVITY = 22;      // units/s² — snappy, arcade-y fall
@@ -38,7 +39,7 @@ export class Player {
     scene.add(this.group);
 
     // gray-box capsule (replaced by the knight GLB if it loads)
-    const capMat = new THREE.MeshLambertMaterial({ color: 0x3a6ea5, flatShading: true });
+    const capMat = toonMat({ color: 0x3a6ea5, flatShading: true });
     this.capsule = new THREE.Mesh(new THREE.CapsuleGeometry(0.35, 0.9, 4, 10), capMat);
     this.capsule.position.y = 1.05;
     this.capsule.castShadow = true;
@@ -63,6 +64,7 @@ export class Player {
         const h = box.max.y - box.min.y;
         model.scale.setScalar(1.75 / h);
         model.traverse((o) => { if (o.isMesh) { o.castShadow = true; } });
+        toonifyObject(model); // cel-shade the knight to match the world
         // keep the 1H sword in the right hand, stash the rest of the armory
         for (const name of ['1H_Sword_Offhand', '2H_Sword', 'Badge_Shield', 'Rectangle_Shield', 'Round_Shield', 'Spike_Shield']) {
           const n = model.getObjectByName(name);
@@ -108,6 +110,7 @@ export class Player {
       (g) => {
         const stock = this.swordNode;
         const custom = g.scene;
+        toonifyObject(custom); // cel-shade, preserving the CAO_EdgeGlow material name
         custom.traverse((o) => {
           if (!o.isMesh) return;
           o.castShadow = true;
