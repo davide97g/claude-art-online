@@ -344,7 +344,7 @@ function tick() {
   }
   for (const e of enemies) e.update(sdt, camera);
   villagers.update(dt, player.pos);
-  dialog.updateCamera(dt);         // after player.update: owns cam (open) / eases back (closing)
+  if (!(bossIntro && bossIntro.blocking)) dialog.updateCamera(dt); // after player.update: owns cam (open) / eases back (closing); yields to a boss cutscene
   floor.update(elapsed);
   weather.update(dt, player.pos);
 
@@ -357,12 +357,13 @@ function tick() {
     if (d < PORTAL_RADIUS && d < nearDist) { nearDist = d; nearPortal = P; }
   }
 
-  if (talkable) hud.showPortalPrompt(`Press E · Talk to ${talkable.identity.name}`);
+  if (dialog.active) hud.showPortalPrompt(null); // the dialog panel is the prompt during a conversation
+  else if (talkable) hud.showPortalPrompt(`Press E · Talk to ${talkable.identity.name}`);
   else if (!nearPortal) hud.showPortalPrompt(null);
   else if (nearPortal.active) hud.showPortalPrompt(`Press E · Floor ${nearPortal.targetLevel}`);
   else hud.showPortalPrompt('Defeat the boss');
 
-  if (input.interact && !transitioning && !dialog.active) {
+  if (input.interact && !transitioning && !dialog.active && !(bossIntro && bossIntro.blocking)) {
     if (talkable && !player.dead) dialog.open(talkable.identity, talkable.person);
     else if (nearPortal && nearPortal.active) startTransition(nearPortal);
   }
