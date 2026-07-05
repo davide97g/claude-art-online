@@ -25,6 +25,10 @@ export class Player {
     this.camDistTarget = 5.4;
     this.camDistMin = 2.6;
     this.camDistMax = 11;
+    // dialogue: while talking, movement + camera-orbit freeze and the Dialog
+    // system owns the camera (see ui/dialog.js). faceTarget = who to look at.
+    this.talking = false;
+    this.faceTarget = null;
     this.shake = 0;
     this.speedNow = 0;
     this.attackT = 0;
@@ -172,6 +176,21 @@ export class Player {
     if (this.dead) {
       this.deadT -= dt;
       if (this.deadT <= 0) this.respawn();
+    }
+
+    // dialogue freeze: hold ground, face the speaker, keep idling. Returns before
+    // the camera block so ui/dialog.js can own the camera for the two-shot.
+    if (this.talking) {
+      this.speedNow = 0;
+      if (this.faceTarget) {
+        const ty = Math.atan2(this.faceTarget.x - this.pos.x, this.faceTarget.z - this.pos.z);
+        let d = ty - this.group.rotation.y;
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        this.group.rotation.y += d * Math.min(1, dt * 8);
+      }
+      this.group.position.copy(this.pos);
+      if (this.mixer) { this.fade('idle'); this.mixer.update(sdt); }
+      return;
     }
 
     // camera orbit
