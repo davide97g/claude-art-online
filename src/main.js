@@ -47,7 +47,7 @@ sun.shadow.camera.far = 300;
 scene.add(sun);
 
 // --- input (pointer lock; per-frame mouse deltas) ---
-const input = { keys: {}, dx: 0, dy: 0, attackQueued: false, locked: false };
+const input = { keys: {}, dx: 0, dy: 0, attackQueued: false, interact: false, locked: false };
 const overlay = document.getElementById('lock-overlay');
 const goBtn = document.getElementById('lock-go');
 let ready = false; // flips true when assets finish loading (or the safety net trips)
@@ -172,6 +172,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('keydown', (e) => {
   input.keys[e.code] = true;
   if (e.code === 'KeyM') music.muted = !music.muted; // toggle background music
+  if (e.code === 'KeyE' && input.locked) input.interact = true; // consumed once in the loop
 });
 document.addEventListener('keyup', (e) => { input.keys[e.code] = false; });
 
@@ -182,11 +183,26 @@ const world = {
   hitStop(dur) { this.stopT = dur; },
 };
 
+// --- level transition (portal → animated wipe → reload into the loading screen) ---
+const PORTAL_RADIUS = 6;
+const TRANS_DUR = 1.1;
+const fadeEl = document.getElementById('portal-fade');
+const camStart = new THREE.Vector3();
+let transitioning = false, transT = 0, transPortal = null, transTarget = 0;
+function startTransition(P) {
+  transitioning = true; transT = 0; transPortal = P; transTarget = P.targetLevel;
+  camStart.copy(camera.position);
+  input.attackQueued = false; input.interact = false;
+  fadeEl.classList.add('go');
+  console.log('[CAO] portal → floor', transTarget);
+}
+
 // --- build everything ---
 const hud = new HUD();
 hud.progression = progression; // addKill(xp) feeds XP through the existing kill funnel
 progression.hud = hud;         // ...and level-ups drive the XP bar / popup back
 const floor = createFloor(scene, biome);
+if (progression.isCleared(biome.id)) floor.openForward(); // re-visit a cleared floor → portal already open
 createTown(scene, terrainHeight, biome);
 const player = new Player(scene, camera, input, terrainHeight, colliders);
 player.hud = hud;
@@ -233,8 +249,7 @@ let bossIntro = null;
 if (biome.boss) {
   const boss = new KoboldLord(scene, biome.boss.x, biome.boss.z, terrainHeight, hud, player, world);
   boss.onDeath = () => {
-    floor.openGate();
-    hud.setGateOpen();
+    floor.openForward();
     hud.showClear(`Floor ${biome.id}`);
     progression.clearFloor(biome.id);
   };
@@ -259,6 +274,19 @@ function tick() {
   else world.timeScale += (1 - world.timeScale) * Math.min(1, dt * 14);
   const sdt = dt * world.timeScale;
 
+  if (transitioning) {
+    transT += dt;
+    const k = Math.min(1, transT / TRANS_DUR);
+    camera.position.lerpVectors(camStart, transPortal.pos, k * 0.6);
+    camera.lookAt(transPortal.pos.x, transPortal.pos.y + 4.4, transPortal.pos.z);
+    camera.fov = 62 + k * 20; camera.updateProjectionMatrix();
+    floor.update(elapsed);
+    weather.update(dt, player.pos);
+    renderer.render(scene, camera);
+    if (k >= 1) location.assign('?level=' + transTarget);
+    return; // raf already scheduled at top of tick
+  }
+
   if (bossIntro && bossIntro.blocking) {
     bossIntro.update(dt);          // cutscene owns the camera; watch-only
     input.attackQueued = false;    // drop clicks buffered during the scene
@@ -271,7 +299,16 @@ function tick() {
   floor.update(elapsed);
   weather.update(dt, player.pos);
 
-  hud.setGateNear(player.pos.distanceTo(floor.gatePos) < 14);
+  let nearPortal = null, nearDist = Infinity;
+  for (const P of floor.portals) {
+    const d = player.pos.distanceTo(P.pos);
+    if (d < PORTAL_RADIUS && d < nearDist) { nearDist = d; nearPortal = P; }
+  }
+  if (!nearPortal) hud.showPortalPrompt(null);
+  else if (nearPortal.active) hud.showPortalPrompt(`Press E · Floor ${nearPortal.targetLevel}`);
+  else hud.showPortalPrompt('Defeat the boss');
+  if (input.interact && nearPortal && nearPortal.active && !transitioning) startTransition(nearPortal);
+  input.interact = false;
 
   const place = nearestPlace(player.pos);
   const placeName = place ? place.name : null;
