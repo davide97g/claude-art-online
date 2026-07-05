@@ -80,13 +80,16 @@
     #lock-go.ready { opacity: 1; pointer-events: auto; cursor: pointer; animation: gopulse 2s ease-in-out infinite; }
     #lock-go.ready:hover { background: rgba(127,212,255,0.14); }
     @keyframes gopulse { 0%,100% { box-shadow: 0 0 0 rgba(127,212,255,0); } 50% { box-shadow: 0 0 18px rgba(127,212,255,0.5); } }
-    #floor-select { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-    #floor-select .floor { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border: 1px solid rgba(127,212,255,0.35); border-radius: 4px; color: #cfe6ff; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; text-decoration: none; opacity: 0.7; transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease; }
+    /* left-side vertical scroller; overscroll-behavior keeps the wheel inside the list, never scrolling the page */
+    #floor-select { position: absolute; left: 28px; top: 50%; transform: translateY(-50%); z-index: 2; display: flex; flex-direction: column; gap: 7px; max-height: 74vh; overflow-y: auto; overscroll-behavior: contain; padding: 10px 14px 10px 4px; scrollbar-width: thin; scrollbar-color: rgba(127,212,255,0.4) transparent; -webkit-mask-image: linear-gradient(180deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(180deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
+    #floor-select::-webkit-scrollbar { width: 6px; }
+    #floor-select::-webkit-scrollbar-thumb { background: rgba(127,212,255,0.4); border-radius: 3px; }
+    #floor-select .floor { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border: 1px solid rgba(127,212,255,0.35); border-radius: 4px; color: #cfe6ff; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; text-decoration: none; opacity: 0.6; white-space: nowrap; transform-origin: left center; transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.2s ease; }
     #floor-select .floor b { color: #7fd4ff; font-weight: 700; }
     #floor-select .floor:hover { opacity: 1; background: rgba(127,212,255,0.1); }
     #floor-select .floor.current { opacity: 1; border-color: #7fd4ff; background: rgba(127,212,255,0.18); }
-    /* keyboard-driven highlight: the one floor arrows will confirm */
-    #floor-select .floor.selected { opacity: 1; border-color: #7fd4ff; color: #eaf6ff; background: rgba(127,212,255,0.22); box-shadow: 0 0 0 1px rgba(127,212,255,0.5), 0 0 16px rgba(127,212,255,0.4); transform: translateY(-1px); }
+    /* keyboard-driven highlight: the one floor arrows will confirm — scaled up so the focus is unmistakable */
+    #floor-select .floor.selected { opacity: 1; border-color: #7fd4ff; color: #eaf6ff; background: rgba(127,212,255,0.22); box-shadow: 0 0 0 1px rgba(127,212,255,0.5), 0 0 16px rgba(127,212,255,0.4); transform: scale(1.14); font-size: 13px; }
     #nav-hint { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.55; }
     #nav-hint kbd { display: inline-block; min-width: 16px; padding: 1px 5px; margin: 0 1px; border: 1px solid rgba(127,212,255,0.4); border-radius: 3px; color: #7fd4ff; font: inherit; font-size: 10px; }
     @media (prefers-reduced-motion: reduce) { #lock-bg .kb.active, #lock-go.ready { animation: none; } }
@@ -131,22 +134,22 @@
       <div id="load-tip"></div>
       <div id="load-bar-wrap"><div id="load-bar"></div></div>
       <div id="load-status">Loading…</div>
-      <div id="floor-select">
-        <a class="floor" data-level="1" href="?level=1"><b>I</b> Verdant Town</a>
-        <a class="floor" data-level="2" href="?level=2"><b>II</b> Frostbound</a>
-        <a class="floor" data-level="3" href="?level=3"><b>III</b> Storm Peaks</a>
-        <a class="floor" data-level="4" href="?level=4"><b>IV</b> The Elderwood</a>
-        <a class="floor" data-level="5" href="?level=5"><b>V</b> Craghold</a>
-        <a class="floor" data-level="6" href="?level=6"><b>VI</b> Cliffhold</a>
-        <a class="floor" data-level="7" href="?level=7"><b>VII</b> The Bastion</a>
-        <a class="floor" data-level="8" href="?level=8"><b>VIII</b> Rivenbend</a>
-        <a class="floor" data-level="9" href="?level=9"><b>IX</b> The Silent City</a>
-        <a class="floor" data-level="10" href="?level=10"><b>X</b> Sanctuary Rise</a>
-        <a class="floor" data-level="11" href="?level=11"><b>XI</b> Tidewatch Abbey</a>
-        <a class="floor" data-level="12" href="?level=12"><b>XII</b> Stillmere</a>
-      </div>
-      <div id="nav-hint"><kbd>←</kbd><kbd>→</kbd> Choose floor · <kbd>Enter</kbd> Link start · <kbd>F</kbd> Fullscreen</div>
+      <div id="nav-hint"><kbd>↑</kbd><kbd>↓</kbd> Choose floor · <kbd>Enter</kbd> Link start · <kbd>F</kbd> Fullscreen</div>
       <div id="lock-go">Link start</div>
+    </div>
+    <div id="floor-select">
+      <a class="floor" data-level="1" href="?level=1"><b>I</b> Verdant Town</a>
+      <a class="floor" data-level="2" href="?level=2"><b>II</b> Frostbound</a>
+      <a class="floor" data-level="3" href="?level=3"><b>III</b> Storm Peaks</a>
+      <a class="floor" data-level="4" href="?level=4"><b>IV</b> The Elderwood</a>
+      <a class="floor" data-level="5" href="?level=5"><b>V</b> Craghold</a>
+      <a class="floor" data-level="6" href="?level=6"><b>VI</b> Cliffhold</a>
+      <a class="floor" data-level="7" href="?level=7"><b>VII</b> The Bastion</a>
+      <a class="floor" data-level="8" href="?level=8"><b>VIII</b> Rivenbend</a>
+      <a class="floor" data-level="9" href="?level=9"><b>IX</b> The Silent City</a>
+      <a class="floor" data-level="10" href="?level=10"><b>X</b> Sanctuary Rise</a>
+      <a class="floor" data-level="11" href="?level=11"><b>XI</b> Tidewatch Abbey</a>
+      <a class="floor" data-level="12" href="?level=12"><b>XII</b> Stillmere</a>
     </div>
   </div>
   <script type="module" src="/src/main.js"></script>

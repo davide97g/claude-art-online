@@ -123,6 +123,7 @@ const floorEls = [...document.querySelectorAll('#floor-select .floor')];
 let selIdx = Math.max(0, floorEls.findIndex((el) => parseInt(el.dataset.level, 10) === biome.id));
 function renderSelection() {
   floorEls.forEach((el, i) => el.classList.toggle('selected', i === selIdx));
+  floorEls[selIdx].scrollIntoView({ block: 'nearest' }); // keep the highlight in the scroller's view
   const lvl = parseInt(floorEls[selIdx].dataset.level, 10);
   setPreview(lvl); // live-preview the highlighted floor
 }
