@@ -65,7 +65,11 @@ const taglineEl = document.querySelector('#lock-content .tagline');
 // rotates through the *current* floor's set; hovering/focusing another floor in the
 // selector swaps the set live so you preview a level before its reload link commits.
 const SHOT_NAMES = ['plaza', 'gate', 'vista'];
-const floorShots = (id) => SHOT_NAMES.map((s) => `/assets/loading/floor${id}/${s}.jpg`);
+// Floors 6–12 have no bespoke loading art yet; alias each to a thematically-close existing set
+// (all resolve to floors 1–5, which are preloaded below) so previews never show broken images.
+// ponytail: reuse existing shots until real per-floor art lands.
+const PREVIEW_ALIAS = { 6: 5, 7: 5, 8: 4, 9: 5, 10: 5, 11: 2, 12: 2 };
+const floorShots = (id) => SHOT_NAMES.map((s) => `/assets/loading/floor${PREVIEW_ALIAS[id] || id}/${s}.jpg`);
 const kbEls = [...document.querySelectorAll('#lock-bg .kb')];
 const setPreview = (id) => {
   floorShots(id).forEach((src, i) => { if (kbEls[i]) kbEls[i].style.backgroundImage = `url(${src})`; });

@@ -17,27 +17,41 @@ import { resolvePushOut } from '../player/collision.js';
 // scale: raw models are ~3–4.3u tall, feet at y=0; scale brings each to ~1.6–1.9u
 // (children are Casual adults shrunk). Clips matched exact 'Idle'/'Walk' first, so
 // 'Idle_Weapon'/'Walk_Carry' variants don't win.
+// `key` = filename stem, used by biome.npcRoster to pick a per-floor cast.
+// `fb` = index into ARCHETYPES (below) so the gray-box fallback keeps the same flavour.
 const NPC_MODELS = [
-  { file: '/assets/models/npc/worker_male.glb', scale: 0.51 },
-  { file: '/assets/models/npc/worker_female.glb', scale: 0.48 },
-  { file: '/assets/models/npc/oldclassy_male.glb', scale: 0.45 },
-  { file: '/assets/models/npc/oldclassy_female.glb', scale: 0.44 },
-  { file: '/assets/models/npc/chef_male.glb', scale: 0.54 },
-  { file: '/assets/models/npc/elf.glb', scale: 0.45 },
-  { file: '/assets/models/npc/casual_male.glb', scale: 0.35 },
-  { file: '/assets/models/npc/casual_female.glb', scale: 0.34 },
-  { file: '/assets/models/npc/viking_male.glb', scale: 0.5 },
-  { file: '/assets/models/npc/kimono_female.glb', scale: 0.52 },
-  { file: '/assets/models/npc/rpg_monk.glb', scale: 0.58 },
-  { file: '/assets/models/npc/knight_male.glb', scale: 0.52 },
-  { file: '/assets/models/npc/rpg_warrior.glb', scale: 0.6 },
-  { file: '/assets/models/npc/rpg_rogue.glb', scale: 0.56 },
-  { file: '/assets/models/npc/rpg_ranger.glb', scale: 0.59 },
-  { file: '/assets/models/npc/rpg_cleric.glb', scale: 0.58 },
-  { file: '/assets/models/npc/witch.glb', scale: 0.46 },
-  { file: '/assets/models/npc/wizard.glb', scale: 0.47 },
-  { file: '/assets/models/npc/knight_golden_female.glb', scale: 0.55 },
+  { key: 'worker_male', file: '/assets/models/npc/worker_male.glb', scale: 0.51, fb: 8 },
+  { key: 'worker_female', file: '/assets/models/npc/worker_female.glb', scale: 0.48, fb: 1 },
+  { key: 'oldclassy_male', file: '/assets/models/npc/oldclassy_male.glb', scale: 0.45, fb: 4 },
+  { key: 'oldclassy_female', file: '/assets/models/npc/oldclassy_female.glb', scale: 0.44, fb: 5 },
+  { key: 'chef_male', file: '/assets/models/npc/chef_male.glb', scale: 0.54, fb: 0 },
+  { key: 'elf', file: '/assets/models/npc/elf.glb', scale: 0.45, fb: 10 },
+  { key: 'casual_male', file: '/assets/models/npc/casual_male.glb', scale: 0.35, fb: 10 },
+  { key: 'casual_female', file: '/assets/models/npc/casual_female.glb', scale: 0.34, fb: 9 },
+  { key: 'viking_male', file: '/assets/models/npc/viking_male.glb', scale: 0.5, fb: 0 },
+  { key: 'kimono_female', file: '/assets/models/npc/kimono_female.glb', scale: 0.52, fb: 5 },
+  { key: 'rpg_monk', file: '/assets/models/npc/rpg_monk.glb', scale: 0.58, fb: 2 },
+  { key: 'knight_male', file: '/assets/models/npc/knight_male.glb', scale: 0.52, fb: 11 },
+  { key: 'rpg_warrior', file: '/assets/models/npc/rpg_warrior.glb', scale: 0.6, fb: 11 },
+  { key: 'rpg_rogue', file: '/assets/models/npc/rpg_rogue.glb', scale: 0.56, fb: 10 },
+  { key: 'rpg_ranger', file: '/assets/models/npc/rpg_ranger.glb', scale: 0.59, fb: 10 },
+  { key: 'rpg_cleric', file: '/assets/models/npc/rpg_cleric.glb', scale: 0.58, fb: 2 },
+  { key: 'witch', file: '/assets/models/npc/witch.glb', scale: 0.46, fb: 3 },
+  { key: 'wizard', file: '/assets/models/npc/wizard.glb', scale: 0.47, fb: 2 },
+  { key: 'knight_golden_female', file: '/assets/models/npc/knight_golden_female.glb', scale: 0.55, fb: 5 },
 ];
+const MODEL_INDEX = Object.fromEntries(NPC_MODELS.map((m, i) => [m.key, i]));
+
+// Resolve biome.npcRoster (array of model keys) → indices into NPC_MODELS. Unknown keys are
+// dropped; no roster (or nothing valid) → the full cast, cycled in order (Floors 1 & 5).
+function rosterPool(biome) {
+  const keys = biome && biome.npcRoster;
+  if (Array.isArray(keys)) {
+    const pool = keys.map((k) => MODEL_INDEX[k]).filter((i) => i !== undefined);
+    if (pool.length) return pool;
+  }
+  return NPC_MODELS.map((_, i) => i);
+}
 
 const PLAZA = new THREE.Vector2(0, 22); // spawn-town center (matches town.js CENTER)
 
@@ -158,12 +172,26 @@ function makePerson(a) {
 //  biome.flags === true → Floor 1 bannered town, fill the plaza, dense
 //  otherwise → a handful around the plaza
 function crowdSpec(biome) {
-  if (biome.city) return { n: 34, region: 'spine' };
+  // region follows the building layout so the crowd lands where the town actually is:
+  //  spine street → 'spine'; any other city topology → 'city' (disk around city.center); else plaza.
+  const region = !biome.city ? 'plaza'
+    : (biome.city.layout && biome.city.layout !== 'spine') ? 'city'
+      : 'spine';
+  // explicit per-floor count wins (lets a floor be denser or sparser than its layout implies)
+  if (typeof biome.npc === 'number') return { n: biome.npc, region };
+  if (biome.city) return { n: 34, region };
   if (biome.flags === true) return { n: 22, region: 'plaza' };
   return { n: 6, region: 'plaza' };
 }
 
-function candidate(region) {
+function candidate(biome, region) {
+  if (region === 'city') {
+    // scatter over the town footprint; sqrt(rng) → uniform density, push-out handles overlaps
+    const c = biome.city.center || { x: 0, z: 40 };
+    const rad = biome.city.radius || 18;
+    const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * rad;
+    return [c.x + Math.cos(a) * r, c.z + Math.sin(a) * r];
+  }
   if (region === 'spine') {
     if (Math.random() < 0.28) { // some milling in the entry plaza
       const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * 9;
@@ -183,18 +211,19 @@ export class Villagers {
     this.colliders = colliders;
     this.people = [];
     const { n, region } = crowdSpec(biome);
+    const pool = rosterPool(biome); // per-floor cast (indices into NPC_MODELS)
 
     for (let i = 0; i < n; i++) {
       let x = 0, z = 0, tries = 0;
-      do { [x, z] = candidate(region); } while (tries++ < 14 && this.inCollider(x, z, 0.8));
-      // cycle over the longer list so every model (and archetype) shows before repeating
-      const typeIdx = i % Math.max(ARCHETYPES.length, NPC_MODELS.length || 1);
-      const g = makePerson(ARCHETYPES[typeIdx % ARCHETYPES.length]);
+      do { [x, z] = candidate(biome, region); } while (tries++ < 14 && this.inCollider(x, z, 0.8));
+      // cycle the roster so every cast member shows before repeating; fallback archetype matches
+      const modelIdx = pool[i % pool.length];
+      const g = makePerson(ARCHETYPES[NPC_MODELS[modelIdx].fb]);
       g.position.set(x, getHeight(x, z), z);
       g.rotation.y = Math.random() * Math.PI * 2;
       scene.add(g);
       this.people.push({
-        g, typeIdx, home: { x, z }, tx: x, tz: z,
+        g, modelIdx, home: { x, z }, tx: x, tz: z,
         wait: Math.random() * 3, speed: 0.7 + Math.random() * 0.7,
         mixer: null, actions: null, current: null,
       });
@@ -217,7 +246,7 @@ export class Villagers {
         loaded[i] = g;
         // upgrade every person assigned to this model
         for (const p of this.people) {
-          if (p.typeIdx % NPC_MODELS.length !== i || p.mixer) continue;
+          if (p.modelIdx !== i || p.mixer) continue;
           this.swapToModel(p, g, m);
         }
       },

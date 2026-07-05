@@ -30,4 +30,26 @@ for (const b of out) {
   assert.ok(city.types.includes(b.type) && city.palette.includes(b.color), 'valid type/color');
 }
 
+// --- new topologies: each keeps the spawn/gate corridor clear (except the castle) and includes it ---
+const common = { palette: ['green', 'red'], types: ['home_A', 'home_B'] };
+const inCorridor = (b) => Math.abs(b.x) < 9 && b.z < 14;
+
+const rings = cityLayout({ layout: 'rings', center: { x: 0, z: 46 }, rings: [{ r: 12, count: 7 }, { r: 22, count: 12 }], castle: { type: 'castle', color: 'green', x: 0, z: 46 }, ...common }, mulberry32(1));
+assert.ok(rings.some((b) => b.castle), 'rings: castle present');
+assert.ok(rings.filter((b) => !b.castle).every((b) => !inCorridor(b)), 'rings: corridor clear');
+
+const cluster = cityLayout({ layout: 'cluster', center: { x: 0, z: 34 }, radius: 15, count: 16, castle: { type: 'castle', color: 'green', x: 0, z: 56 }, ...common }, mulberry32(2));
+assert.ok(cluster.filter((b) => !b.castle).every((b) => Math.hypot(b.x, b.z - 34) <= 15 + 1e-9), 'cluster: inside disk');
+assert.ok(cluster.filter((b) => !b.castle).every((b) => !inCorridor(b)), 'cluster: corridor clear');
+
+const terr = cityLayout({ layout: 'terraces', rows: [{ z: 28, count: 5, halfWidth: 14 }, { z: 58, count: 4, halfWidth: 9 }], castle: { type: 'castle', color: 'green', x: 0, z: 88 }, jitter: 0, ...common }, mulberry32(3));
+assert.equal(terr.filter((b) => !b.castle).length, 9, 'terraces: row counts');
+
+const spiral = cityLayout({ layout: 'spiral', center: { x: 0, z: 64 }, turns: 1.4, count: 11, rMax: 17, castle: { type: 'church', color: 'green', x: 0, z: 82 }, ...common }, mulberry32(4));
+assert.equal(spiral.filter((b) => !b.castle).length, 11, 'spiral: count');
+
+const shore = cityLayout({ layout: 'shore', rows: [{ z: 26, count: 8 }, { z: 33, count: 6 }], xRange: [-32, 32], faceZ: 60, castle: { type: 'church', color: 'green', x: 0, z: 20 }, jitter: 0, ...common }, mulberry32(5));
+assert.equal(shore.filter((b) => !b.castle).length, 14, 'shore: row counts');
+assert.ok(shore.filter((b) => !b.castle).every((b) => Math.abs(b.yaw) < 1e-6), 'shore: all face the lake (+Z)');
+
 console.log('citylayout.mjs OK');
