@@ -9,6 +9,7 @@ import { Golem } from './combat/golem';
 import { manager } from './loading.js';
 import { Player } from './player/controller.js';
 import { Progression } from './progression.js';
+import { Dialog } from './ui/dialog.js';
 import { HUD } from './ui/hud.js';
 import { getBiome } from './world/biomes.js';
 import { createFloor, terrainHeight } from './world/floor.js';
@@ -123,6 +124,7 @@ document.addEventListener('pointerlockchange', () => {
   input.locked = document.pointerLockElement === renderer.domElement;
   overlay.classList.toggle('hidden', input.locked); // fade out on enter, back on Esc-pause
   if (input.locked) statPanel.classList.add('live'); // stat plate slides in on first entry
+  if (!input.locked && dialog.active) dialog.close(); // Esc/blur mid-talk → resolve state
 });
 
 // --- loading-screen keyboard nav: arrows pick a floor, Enter confirms, F toggles fullscreen ---
@@ -302,6 +304,7 @@ if (biome.boss) {
 
 // console debug handle (no gameplay effect)
 window.CAO = { player, enemies, progression };
+const dialog = new Dialog({ player, villagers, camera });
 
 // --- loop ---
 const clock = new THREE.Clock();
@@ -332,24 +335,37 @@ function tick() {
   if (bossIntro && bossIntro.blocking) {
     bossIntro.update(dt);          // cutscene owns the camera; watch-only
     input.attackQueued = false;    // drop clicks buffered during the scene
+  } else if (dialog.active) {
+    player.update(dt, sdt);        // idle + faces the NPC; skips its own camera
+    input.attackQueued = false;    // no swinging mid-conversation
   } else {
     player.update(dt, sdt);
     blade.update(sdt, dt, input, enemies, camera);
   }
   for (const e of enemies) e.update(sdt, camera);
-  villagers.update(dt);
+  villagers.update(dt, player.pos);
+  dialog.updateCamera(dt);         // after player.update: owns cam (open) / eases back (closing)
   floor.update(elapsed);
   weather.update(dt, player.pos);
+
+  // talkable NPC in reach takes priority over the portal prompt
+  const talkable = (dialog.active || !input.locked) ? null : villagers.nearestTalkable(player.pos, 2.6);
 
   let nearPortal = null, nearDist = Infinity;
   for (const P of floor.portals) {
     const d = player.pos.distanceTo(P.pos);
     if (d < PORTAL_RADIUS && d < nearDist) { nearDist = d; nearPortal = P; }
   }
-  if (!nearPortal) hud.showPortalPrompt(null);
+
+  if (talkable) hud.showPortalPrompt(`Press E · Talk to ${talkable.identity.name}`);
+  else if (!nearPortal) hud.showPortalPrompt(null);
   else if (nearPortal.active) hud.showPortalPrompt(`Press E · Floor ${nearPortal.targetLevel}`);
   else hud.showPortalPrompt('Defeat the boss');
-  if (input.interact && nearPortal && nearPortal.active && !transitioning) startTransition(nearPortal);
+
+  if (input.interact && !transitioning && !dialog.active) {
+    if (talkable && !player.dead) dialog.open(talkable.identity, talkable.person);
+    else if (nearPortal && nearPortal.active) startTransition(nearPortal);
+  }
   input.interact = false;
 
   const place = nearestPlace(player.pos);
