@@ -6,7 +6,9 @@ import * as THREE from 'three';
 //
 // ponytail: 4-band ramp is the whole look. Fewer steps = harder cartoon banding,
 // more steps = softer. Tune these four bytes to retune the entire game's shading.
-const steps = new Uint8Array([120, 175, 220, 255]);
+// Floor must stay LOW: hemi+ambient already lift shadows; a high first band
+// (was 120) gives shadow faces ~half the sun and models read flat/2D.
+const steps = new Uint8Array([60, 135, 200, 255]);
 export const gradientMap = new THREE.DataTexture(steps, steps.length, 1, THREE.RedFormat);
 gradientMap.minFilter = gradientMap.magFilter = THREE.NearestFilter;
 gradientMap.generateMipmaps = false;
