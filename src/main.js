@@ -17,6 +17,7 @@ import { createFloor, terrainHeight } from './world/floor.js';
 import { Villagers } from './world/npc.js';
 import { colliders, createTown } from './world/town.js';
 import { createWeather } from './world/weather.js';
+import { Dragon } from './world/dragon.js';
 
 document.getElementById('version').textContent = 'v' + pkg.version;
 
@@ -249,6 +250,7 @@ progression.hud = hud;         // ...and level-ups drive the XP bar / popup back
 const floor = createFloor(scene, biome);
 if (progression.isCleared(biome.id)) floor.openForward(false); // re-visit a cleared floor → portal already open, no flourish
 createTown(scene, terrainHeight, biome);
+const dragon = biome.dragon ? new Dragon(scene, terrainHeight, biome.dragon) : null; // Floor 13 Smaug fly-in
 const player = new Player(scene, camera, input, terrainHeight, colliders);
 player.hud = hud;
 progression.player = player;
@@ -352,6 +354,7 @@ function tick() {
   }
   for (const e of enemies) e.update(sdt, camera);
   villagers.update(dt, player.pos);
+  dragon?.update(dt);
   if (!(bossIntro && bossIntro.blocking)) dialog.updateCamera(dt); // after player.update: owns cam (open) / eases back (closing); yields to a boss cutscene
   floor.update(elapsed);
   weather.update(dt, player.pos);

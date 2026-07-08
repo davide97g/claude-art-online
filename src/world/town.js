@@ -249,31 +249,14 @@ export function createTown(scene, getHeight, biome) {
       () => console.log(`[CAO] landmark missing: ${lm.file}`));
   }
 
-  // --- dragon set-piece (Floor 13): Smaug on the Pelennor. Deliberately NOT
-  // toonified — the realistic hero model keeps its baked vertex colors and
-  // emissive embers (blender/dragon_build.py, see DRAGON_PLAN.md). ---
+  // --- dragon set-piece (Floor 13): the model + fly-in/idle animation live in
+  // world/dragon.js (instantiated by main.js); here we only reserve the landing
+  // spot — a player collider and a scatter-free zone so nothing spawns under it.
   dragonBlock = null;
   if (biome.dragon) {
     const dr = biome.dragon;
     colliders.push({ x: dr.x, z: dr.z, r: dr.blockR });
-    dragonBlock = { x: dr.x, z: dr.z, r: dr.blockR + 8 }; // keep scatter out from under it
-    loader.load(`/assets/models/${dr.file}`,
-      (g) => {
-        const m = g.scene;
-        m.traverse((o) => {
-          if (!o.isMesh) return;
-          o.castShadow = true; o.receiveShadow = true;
-          if (o.material?.name === 'CAO_DragonEmber') { // breathing ember pulse (real time — cosmetic)
-            o.onBeforeRender = () => { o.material.emissiveIntensity = 10 + 6 * Math.sin(performance.now() / 900); };
-          }
-        });
-        m.scale.setScalar(dr.scale ?? 1);
-        m.rotation.y = dr.yaw ?? 0;
-        m.position.set(dr.x, getHeight(dr.x, dr.z), dr.z);
-        root.add(m);
-      },
-      undefined,
-      () => console.log(`[CAO] dragon missing: ${dr.file}`));
+    dragonBlock = { x: dr.x, z: dr.z, r: dr.blockR + 8 };
   }
 
   // --- settlement: hand-placed buildings, faced toward the cluster center ---
