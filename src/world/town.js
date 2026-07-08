@@ -185,9 +185,13 @@ async function scatterTinted(parent, path, transforms, tint, { collide = 0 } = {
 }
 
 // keep spawn plaza (z>~14, |x|<8) and the lane down to the gate clear of scatter
+let landmarkBlock = null; // {x, z, r} — set per-build when the biome has a hero landmark
+let dragonBlock = null;   // same, for the dragon set-piece
 function blocked(x, z) {
   if (Math.abs(x) < 9 && z < 14) return true;                          // spawn + gate corridor
   if (Math.hypot(x - GATE_POS.x, z - GATE_POS.z) < 20) return true;    // gate apron
+  if (landmarkBlock && Math.hypot(x - landmarkBlock.x, z - landmarkBlock.z) < landmarkBlock.r) return true;
+  if (dragonBlock && Math.hypot(x - dragonBlock.x, z - dragonBlock.z) < dragonBlock.r) return true;
   return false;
 }
 
@@ -221,6 +225,56 @@ export function createTown(scene, getHeight, biome) {
   const rng = mulberry32(1337);
   const tint = biome.tint;
   colliders.length = 0; // fresh registry per build
+
+  // --- hero landmark (Floor 13): one bespoke GLB *is* the city — modeled at
+  // world scale in Blender (base at y=0, gate facing +Z pre-yaw), so it just
+  // sits on the terrain. One big collider keeps the player outside the walls
+  // (the mesh has no per-building colliders). ---
+  landmarkBlock = null;
+  if (biome.landmark) {
+    const lm = biome.landmark;
+    colliders.push({ x: lm.x, z: lm.z, r: lm.blockR });
+    landmarkBlock = { x: lm.x, z: lm.z, r: lm.blockR + 6 }; // keep tree/rock scatter off the walls too
+    loader.load(`/assets/models/${lm.file}`,
+      (g) => {
+        const m = g.scene;
+        m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+        toonifyObject(m);
+        m.scale.setScalar(lm.scale ?? 1);
+        m.rotation.y = lm.yaw ?? 0;
+        m.position.set(lm.x, getHeight(lm.x, lm.z) - (lm.sink ?? 1), lm.z);
+        root.add(m);
+      },
+      undefined,
+      () => console.log(`[CAO] landmark missing: ${lm.file}`));
+  }
+
+  // --- dragon set-piece (Floor 13): Smaug on the Pelennor. Deliberately NOT
+  // toonified — the realistic hero model keeps its baked vertex colors and
+  // emissive embers (blender/dragon_build.py, see DRAGON_PLAN.md). ---
+  dragonBlock = null;
+  if (biome.dragon) {
+    const dr = biome.dragon;
+    colliders.push({ x: dr.x, z: dr.z, r: dr.blockR });
+    dragonBlock = { x: dr.x, z: dr.z, r: dr.blockR + 8 }; // keep scatter out from under it
+    loader.load(`/assets/models/${dr.file}`,
+      (g) => {
+        const m = g.scene;
+        m.traverse((o) => {
+          if (!o.isMesh) return;
+          o.castShadow = true; o.receiveShadow = true;
+          if (o.material?.name === 'CAO_DragonEmber') { // breathing ember pulse (real time — cosmetic)
+            o.onBeforeRender = () => { o.material.emissiveIntensity = 10 + 6 * Math.sin(performance.now() / 900); };
+          }
+        });
+        m.scale.setScalar(dr.scale ?? 1);
+        m.rotation.y = dr.yaw ?? 0;
+        m.position.set(dr.x, getHeight(dr.x, dr.z), dr.z);
+        root.add(m);
+      },
+      undefined,
+      () => console.log(`[CAO] dragon missing: ${dr.file}`));
+  }
 
   // --- settlement: hand-placed buildings, faced toward the cluster center ---
   for (const [type, color, x, z] of biome.settlement) {

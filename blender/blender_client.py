@@ -18,7 +18,8 @@ HOST, PORT = 'localhost', 9876
 
 PREAMBLE = "import bpy, mathutils, math\n"  # official addon namespace has only `result={}`
 
-def send_code(code, strict_json=False, timeout=180):
+import os
+def send_code(code, strict_json=False, timeout=int(os.environ.get('CAO_BLENDER_TIMEOUT', 900))):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(timeout)
     s.connect((HOST, PORT))

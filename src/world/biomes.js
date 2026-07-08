@@ -644,6 +644,57 @@ export const BIOMES = [
     ],
     enemies: [], // peaceful slice-of-life village
   },
+
+  { // ---------- Floor 13: The White City (Minas Tirith — tiered white fortress-city on a mountain spur) ----------
+    id: 13,
+    name: 'The White City',
+    place0: 'The Pelennor gate',
+    background: 0xb9c6d6,
+    fog: { color: 0xbfc9d6, near: 55, far: 200 },
+    hemi: { sky: 0xe2eaf4, ground: 0x6b7460, intensity: 1.0 },
+    sun: { color: 0xfff3dc, intensity: 1.25, pos: [55, 85, 30] },
+    // gentle fields — the bespoke landmark GLB brings all the verticality itself
+    terrain: { lo: 0x5f7d4a, hi: 0x8fae6a, amp: 0.7, freq: 0.9 },
+    sky: { ceiling: 0x9fafc2, core: 0xc2cdda },
+    tint: 0xd8d5c8,        // pale white-stone wash
+    enemyTint: 0x9aa2ae,
+    weather: 'wind',
+    npc: 14,
+    trees: [
+      { path: 'decoration/nature/tree_single_A', count: 16, sMin: 0.7, sMax: 1.1 },
+      { path: 'decoration/nature/tree_single_B', count: 12, sMin: 0.7, sMax: 1.1 },
+    ],
+    rocks: [
+      { path: 'decoration/nature/rock_single_A', count: 34, sMin: 3, sMax: 8 },
+      { path: 'decoration/nature/rock_single_D', count: 22, sMin: 2, sMax: 6 },
+    ],
+    mountains: ['mountain_A', 'mountain_B', 'mountain_C', 'hills_A', 'hills_B'],
+    clouds: 6,
+    npcRoster: ['oldclassy_male', 'oldclassy_female', 'rpg_cleric', 'worker_male', 'casual_female', 'wizard'], // stewards, clergy, citizens
+    // the whole tiered city is one bespoke Blender mesh (blender/minas_build.py);
+    // gate faces the player (-Z after yaw), blockR keeps everyone outside the walls
+    landmark: { file: 'minas_city.glb', x: 0, z: 96, scale: 0.85, yaw: Math.PI, blockR: 49, sink: 1 },
+    // Smaug crouched on the Pelennor, flanking the gate approach and facing the
+    // spawn field (model faces +Z at yaw 0; blender/dragon_build.py hero piece)
+    dragon: { file: 'dragon.glb', x: -30, z: 34, scale: 2.0, yaw: 2.42, blockR: 9 },
+    settlement: [],
+    props: [ // a small camp before the gate — the playable field is outside the walls
+      ['barrel', -6, 24], ['sack', 6, 26], ['bucket_water', 0, 30], ['ladder', -8, 40],
+      ['tent', -14, 30], ['tent', 15, 28], ['crate_A_big', 10, 36],
+    ],
+    flags: false,
+    ruins: [],
+    places: [
+      { name: 'The Pelennor Fields', x: 0, z: 10, r: 30 },
+      { name: 'The Great Gate', x: 0, z: 46, r: 14 },
+      { name: 'The White City', x: 0, z: 96, r: 52 },
+      { name: 'The Sealed Gate', x: 0, z: -120, r: 20 },
+    ],
+    enemies: [ // skirmishers on the fields before the gate
+      { type: 'golem', x: 14, z: -28 }, { type: 'golem', x: -18, z: -44 }, { type: 'golem', x: 10, z: -68 },
+      { type: 'golem', x: -12, z: -92 }, { type: 'golem', x: 22, z: -106 },
+    ],
+  },
 ];
 
 // Parse ?level=N (1..BIOMES.length), clamp, return the biome. Defaults to Floor 1.

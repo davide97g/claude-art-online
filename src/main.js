@@ -6,6 +6,7 @@ import { KoboldLord } from './combat/boss';
 import { BossIntro } from './combat/cutscene';
 import { Dummy } from './combat/dummy';
 import { Golem } from './combat/golem';
+import { Orc, orcSpot } from './combat/orc';
 import { manager } from './loading.js';
 import { Player } from './player/controller.js';
 import { Progression } from './progression.js';
@@ -76,7 +77,7 @@ const SHOT_NAMES = ['plaza', 'gate', 'vista'];
 // Floors 6–12 have no bespoke loading art yet; alias each to a thematically-close existing set
 // (all resolve to floors 1–5, which are preloaded below) so previews never show broken images.
 // ponytail: reuse existing shots until real per-floor art lands.
-const PREVIEW_ALIAS = { 6: 5, 7: 5, 8: 4, 9: 5, 10: 5, 11: 2, 12: 2 };
+const PREVIEW_ALIAS = { 6: 5, 7: 5, 8: 4, 9: 5, 10: 5, 11: 2, 12: 2, 13: 5 };
 const floorShots = (id) => SHOT_NAMES.map((s) => `/assets/loading/floor${PREVIEW_ALIAS[id] || id}/${s}.jpg`);
 const kbEls = [...document.querySelectorAll('#lock-bg .kb')];
 const setPreview = (id) => {
@@ -289,6 +290,13 @@ const enemies = biome.enemies.map((e) =>
     : e.type === 'boar'
       ? new Boar(scene, e.x, e.z, terrainHeight, hud, player)
       : new Golem(scene, e.x, e.z, terrainHeight, hud, player, world, biome.enemyTint));
+// orc horde: random field spawns, each respawns at a new random spot (skip peaceful floors)
+if (biome.enemies.length) {
+  for (let i = 0; i < 10; i++) {
+    const [ox, oz] = orcSpot();
+    enemies.push(new Orc(scene, ox, oz, terrainHeight, hud, player, world));
+  }
+}
 let bossIntro = null;
 if (biome.boss) {
   const boss = new KoboldLord(scene, biome.boss.x, biome.boss.z, terrainHeight, hud, player, world);
